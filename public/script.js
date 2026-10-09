@@ -53,7 +53,7 @@ function playSound(type) {
             osc.stop(now + 0.15);
         }
     } catch (e) {
-        console.log("Audio not allowed yet:", e);
+        console.log("Audio notice:", e);
     }
 }
 
@@ -97,7 +97,6 @@ const icons = {
     right: document.getElementById('icon-right')
 };
 
-// Start Button Handler
 startBtn.onclick = () => {
     socket.emit('requestStartGame');
 };
@@ -122,7 +121,7 @@ function updateSeatLabels(isBotArray) {
 
     const relP = [
         (me + 1) % 4, // Right
-        (me + 2) % 4, // Top (Partner)
+        (me + 2) % 4, // Top
         (me + 3) % 4  // Left
     ];
 
@@ -138,6 +137,7 @@ function updateSeatLabels(isBotArray) {
     icons.left.innerText = isBotArray[relP[2]] ? '🤖' : `P${relP[2] + 1}`;
 }
 
+// RENDER USER HAND (Overlapping Mobile Callbreak Style)
 socket.on('updateHand', (cards) => {
     handContainer.innerHTML = '';
 
@@ -151,12 +151,17 @@ socket.on('updateHand', (cards) => {
 
     cards.forEach((card, index) => {
         const el = document.createElement('div');
-        el.className = `card card-playable ${card.color}`;
+        el.className = `hand-card ${card.color}`;
+        el.style.zIndex = index + 1; // Left to right overlap order
+
         el.innerHTML = `
-            <div>${card.rank}</div>
-            <div class="text-xl text-center leading-none">${card.suit}</div>
-            <div class="text-right text-[11px]">${card.rank}</div>
+            <div class="card-corner">
+                <span class="corner-rank">${card.rank}</span>
+                <span class="corner-suit">${card.suit}</span>
+            </div>
+            <div class="card-center-suit">${card.suit}</div>
         `;
+
         el.onclick = () => {
             if (isMyTurn) {
                 socket.emit('playCard', index);
@@ -167,7 +172,7 @@ socket.on('updateHand', (cards) => {
 });
 
 socket.on('gameState', (state) => {
-    lobby.style.display = 'none'; // Ensure lobby hides when game runs
+    lobby.style.display = 'none';
     if (state.eventType) playSound(state.eventType);
 
     updateSeatLabels(state.isBot);
@@ -179,7 +184,7 @@ socket.on('gameState', (state) => {
 
     if (state.hukumRevealed) {
         let color = (state.hukumSuit === '♥' || state.hukumSuit === '♦') ? 'text-red-500' : 'text-amber-400';
-        hukumDisplay.innerHTML = `<span class="${color} text-lg">${state.hukumSuit}</span>`;
+        hukumDisplay.innerHTML = `<span class="${color} text-lg font-black">${state.hukumSuit}</span>`;
     } else {
         hukumDisplay.innerText = '🔒 Band';
     }
@@ -194,7 +199,7 @@ socket.on('gameState', (state) => {
         turnBadge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500 text-black animate-pulse";
     } else {
         const isCurrentBot = state.isBot && state.isBot[activePlayer];
-        turnBadge.innerText = `${isCurrentBot ? 'Bot' : 'P'}${activePlayer + 1} soch raha hai...`;
+        turnBadge.innerText = `${isCurrentBot ? 'Bot' : 'P'}${activePlayer + 1} ki baari`;
         turnBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-400";
     }
 
@@ -209,7 +214,7 @@ socket.on('gameState', (state) => {
 
     if (state.message) statusPill.innerText = state.message;
 
-    // Render Scattered Pool
+    // 1. RENDER SCATTERED POOL (Table par padi hui purani patti)
     scatteredPoolDiv.innerHTML = '';
     state.centerPool.forEach((card, idx) => {
         const cardEl = document.createElement('div');
@@ -220,14 +225,14 @@ socket.on('gameState', (state) => {
 
         cardEl.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${angle}deg)`;
         cardEl.innerHTML = `
-            <div>${card.rank}</div>
-            <div class="text-sm text-center">${card.suit}</div>
-            <div class="text-right">${card.rank}</div>
+            <div class="text-[10px] font-bold leading-none">${card.rank}</div>
+            <div class="text-sm text-center leading-none">${card.suit}</div>
+            <div class="text-[9px] text-right font-bold leading-none">${card.rank}</div>
         `;
         scatteredPoolDiv.appendChild(cardEl);
     });
 
-    // Render Active Trick
+    // 2. RENDER CURRENT TRICK CARDS (Table par abhi chali hui patti)
     activeTrickDiv.innerHTML = '';
     const seatOffsets = {
         0: { x: 0, y: 38 },   // Bottom
@@ -244,9 +249,9 @@ socket.on('gameState', (state) => {
         cardEl.className = `active-trick-card ${tc.card.color}`;
         cardEl.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
         cardEl.innerHTML = `
-            <div>${tc.card.rank}</div>
-            <div class="text-lg text-center leading-none">${tc.card.suit}</div>
-            <div class="text-right">${tc.card.rank}</div>
+            <div class="text-xs font-black leading-none">${tc.card.rank}</div>
+            <div class="text-2xl text-center leading-none">${tc.card.suit}</div>
+            <div class="text-[11px] text-right font-black leading-none">${tc.card.rank}</div>
         `;
         activeTrickDiv.appendChild(cardEl);
     });
