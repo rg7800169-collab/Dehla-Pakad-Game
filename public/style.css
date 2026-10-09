@@ -1,88 +1,136 @@
 /* Callbreak Casino Felt Table */
 .felt-table {
     background: radial-gradient(circle at center, #1b4f2c 0%, #0d3019 75%, #071c0e 100%);
-    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8), 0 10px 25px rgba(0, 0, 0, 0.7);
-    outline: 2px dashed rgba(212, 175, 55, 0.25);
-    outline-offset: -12px;
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.9), 0 10px 30px rgba(0, 0, 0, 0.8);
+    outline: 2px dashed rgba(212, 175, 55, 0.35);
+    outline-offset: -10px;
 }
 
-/* Playing Card Design */
-.card {
+/* ==========================================================
+   FIX 1: UNIVERSAL CARD COLOR & VISIBILITY (No More Blank White)
+   ========================================================== */
+.card, .active-trick-card, .pool-card-scattered {
+    background-color: #ffffff !important;
+    user-select: none;
+}
+
+/* Red Suits (Hearts & Diamonds) */
+.card.red, .active-trick-card.red, .pool-card-scattered.red,
+.card.red *, .active-trick-card.red *, .pool-card-scattered.red * {
+    color: #dc2626 !important; /* Crisp Deep Red */
+}
+
+/* Black Suits (Spades & Clubs) */
+.card.black, .active-trick-card.black, .pool-card-scattered.black,
+.card.black *, .active-trick-card.black *, .pool-card-scattered.black * {
+    color: #0f172a !important; /* Crisp Jet Black */
+}
+
+/* ==========================================================
+   FIX 2: MOBILE CALLBREAK OVERLAPPING HAND (Saari Patti Ek Saath)
+   ========================================================== */
+#hand-container {
+    padding-top: 25px; /* Cards lift hone ke liye space */
+}
+
+.hand-card {
+    width: 48px;
+    height: 74px;
+    background: #ffffff !important;
+    border-radius: 6px;
+    border: 1.5px solid #cbd5e1;
+    box-shadow: -3px 0 8px rgba(0, 0, 0, 0.45);
+    margin-left: -20px; /* Real card fan overlap */
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), z-index 0.18s;
+}
+
+.hand-card:first-child {
+    margin-left: 0 !important;
+}
+
+/* Touch ya Hover par patti upar uthegi */
+.hand-card:hover, .hand-card:active {
+    transform: translateY(-22px) scale(1.12);
+    z-index: 60 !important;
+    box-shadow: 0 14px 22px rgba(0, 0, 0, 0.7);
+    border-color: #f59e0b;
+}
+
+/* Corner Index (Overlap hone ke baad bhi number aur suit dikhega) */
+.card-corner {
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    font-weight: 900;
+}
+.card-corner .corner-rank {
+    font-size: 13px;
+}
+.card-corner .corner-suit {
+    font-size: 11px;
+}
+
+.card-center-suit {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -40%);
+    font-size: 24px;
+    line-height: 1;
+}
+
+/* ==========================================================
+   TABLE PAR FEKI HUI PATTI (Active Trick)
+   ========================================================== */
+.active-trick-card {
+    position: absolute;
     width: 52px;
     height: 76px;
-    background: #ffffff;
-    border-radius: 6px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.45);
+    border-radius: 7px;
+    border: 2px solid #fbbf24; /* Golden Highlight Border */
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.8);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     padding: 3px 5px;
     font-weight: 900;
-    font-size: 13px;
-    cursor: pointer;
-    user-select: none;
-    flex-shrink: 0;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    border: 1px solid #d6d3d1;
+    z-index: 30;
+    animation: dropIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.card.red {
-    color: #dc2626;
+@keyframes dropIn {
+    from { opacity: 0; transform: scale(1.3) translateY(-20px); }
+    to { opacity: 1; }
 }
 
-.card.black {
-    color: #171717;
-}
-
-/* User Card Lift Effect */
-.card-playable:hover, .card-playable:active {
-    transform: translateY(-14px) scale(1.05);
-    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.6);
-}
-
-/* Scattered Pool Cards (Table par padi hui patiyan) */
+/* ==========================================================
+   GOJH / POOL PAR BIKHRI HUI PATTIYAN
+   ========================================================== */
 .pool-card-scattered {
     position: absolute;
     width: 44px;
     height: 64px;
-    background: #f5f5f4;
     border-radius: 5px;
-    border: 1px solid #a8a29e;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    border: 1px solid #94a3b8;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 2px 3px;
-    font-size: 10px;
+    padding: 2px 4px;
     font-weight: 800;
-    opacity: 0.92;
-    transition: all 0.3s ease;
+    opacity: 0.94;
     pointer-events: none;
 }
 
-/* Active Trick Cards (Jo chaal abhi chal rahe hain) */
-.active-trick-card {
-    position: absolute;
-    width: 50px;
-    height: 74px;
-    background: #ffffff;
-    border-radius: 6px;
-    border: 1.5px solid #fbbf24;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 3px 4px;
-    font-size: 12px;
-    font-weight: 900;
-    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-/* Player Avatars */
-.player-seat {
-    z-index: 15;
-}
-
+/* Avatars */
+.player-seat { z-index: 20; }
 .avatar-ring {
     width: 38px;
     height: 38px;
@@ -95,34 +143,15 @@
     box-shadow: 0 3px 6px rgba(0,0,0,0.5);
     transition: all 0.2s ease;
 }
-
 .avatar-ring.turn-active {
     border-color: #22c55e;
     box-shadow: 0 0 14px #22c55e;
     transform: scale(1.1);
 }
+.avatar-icon { font-size: 11px; font-weight: 800; }
+.player-name { font-size: 10px; color: #d6d3d1; margin-top: 2px; text-shadow: 0 1px 2px black; }
 
-.avatar-icon {
-    font-size: 11px;
-    font-weight: 800;
-}
-
-.player-name {
-    font-size: 10px;
-    color: #d6d3d1;
-    margin-top: 2px;
-    text-shadow: 0 1px 2px black;
-}
-
-/* Custom Scrollbar for Hand */
-.custom-scroll::-webkit-scrollbar {
-    height: 4px;
-}
-.custom-scroll::-webkit-scrollbar-thumb {
-    background: #57534e;
-    border-radius: 2px;
-}
-
-.pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 8px);
-}
+/* Custom Scrollbar */
+.custom-scroll::-webkit-scrollbar { height: 4px; }
+.custom-scroll::-webkit-scrollbar-thumb { background: #57534e; border-radius: 2px; }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 8px); }
