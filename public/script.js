@@ -4,7 +4,6 @@ let myPlayerNumber = null;
 let isMyTurn = false;
 let soundEnabled = true;
 
-// Audio Synthesizer (Zero external files needed)
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playSound(type) {
@@ -21,7 +20,6 @@ function playSound(type) {
         const now = audioCtx.currentTime;
 
         if (type === 'cardPlay') {
-            // Card snap/slap sound
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(180, now);
             osc.frequency.exponentialRampToValueAtTime(40, now + 0.08);
@@ -30,7 +28,6 @@ function playSound(type) {
             osc.start(now);
             osc.stop(now + 0.08);
         } else if (type === 'poolCollect') {
-            // Card pickup / sweep whoosh
             osc.type = 'sine';
             osc.frequency.setValueAtTime(220, now);
             osc.frequency.exponentialRampToValueAtTime(660, now + 0.25);
@@ -39,7 +36,6 @@ function playSound(type) {
             osc.start(now);
             osc.stop(now + 0.25);
         } else if (type === 'hukum') {
-            // Trump fanfare chime
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(523.25, now);
             osc.frequency.setValueAtTime(659.25, now + 0.1);
@@ -49,7 +45,6 @@ function playSound(type) {
             osc.start(now);
             osc.stop(now + 0.4);
         } else if (type === 'turnAlert') {
-            // Notification ding
             osc.type = 'sine';
             osc.frequency.setValueAtTime(880, now);
             gain.gain.setValueAtTime(0.3, now);
@@ -62,14 +57,13 @@ function playSound(type) {
     }
 }
 
-// Sound toggle button
 document.getElementById('sound-btn').onclick = () => {
     soundEnabled = !soundEnabled;
     document.getElementById('sound-btn').innerText = soundEnabled ? '🔊' : '🔇';
 };
 
-// Elements
 const lobby = document.getElementById('lobby');
+const startBtn = document.getElementById('start-game-btn');
 const playerCountEl = document.getElementById('player-count');
 const myPlayerBadge = document.getElementById('my-player-badge');
 const statusPill = document.getElementById('status-pill');
@@ -85,7 +79,6 @@ const t1Cards = document.getElementById('t1-cards');
 const t2Dehle = document.getElementById('t2-dehle');
 const t2Cards = document.getElementById('t2-cards');
 
-// Seats mapping
 const rings = {
     bottom: document.getElementById('ring-bottom'),
     top: document.getElementById('ring-top'),
@@ -98,33 +91,51 @@ const names = {
     left: document.getElementById('name-left'),
     right: document.getElementById('name-right')
 };
+const icons = {
+    top: document.getElementById('icon-top'),
+    left: document.getElementById('icon-left'),
+    right: document.getElementById('icon-right')
+};
+
+// Start Button Handler
+startBtn.onclick = () => {
+    socket.emit('requestStartGame');
+};
 
 socket.on('playerAssigned', (num) => {
     myPlayerNumber = num;
     myPlayerBadge.innerText = `Aapka Number: Player ${num} (${num % 2 === 1 ? 'Team 1' : 'Team 2'})`;
-    setupSeatNames();
 });
 
 socket.on('playerCount', (count) => {
     playerCountEl.innerText = count;
-    if (count === 4) {
-        lobby.style.display = 'none';
-        playSound('turnAlert');
-    }
 });
 
-function setupSeatNames() {
-    if (!myPlayerNumber) return;
+socket.on('gameStarted', () => {
+    lobby.style.display = 'none';
+    playSound('turnAlert');
+});
+
+function updateSeatLabels(isBotArray) {
+    if (!myPlayerNumber || !isBotArray) return;
     const me = myPlayerNumber - 1;
-    // Relative Callbreak seats (0: Bottom/Me, 1: Right, 2: Top/Partner, 3: Left)
-    const rightP = (me + 1) % 4 + 1;
-    const topP = (me + 2) % 4 + 1;
-    const leftP = (me + 3) % 4 + 1;
+
+    const relP = [
+        (me + 1) % 4, // Right
+        (me + 2) % 4, // Top (Partner)
+        (me + 3) % 4  // Left
+    ];
 
     names.bottom.innerText = `Aap (P${myPlayerNumber})`;
-    names.right.innerText = `P${rightP}`;
-    names.top.innerText = `Partner (P${topP})`;
-    names.left.innerText = `P${leftP}`;
+
+    names.right.innerText = isBotArray[relP[0]] ? `Bot ${relP[0] + 1}` : `Player ${relP[0] + 1}`;
+    icons.right.innerText = isBotArray[relP[0]] ? '🤖' : `P${relP[0] + 1}`;
+
+    names.top.innerText = isBotArray[relP[1]] ? `Bot Partner` : `Partner (P${relP[1] + 1})`;
+    icons.top.innerText = isBotArray[relP[1]] ? '🤖' : `P${relP[1] + 1}`;
+
+    names.left.innerText = isBotArray[relP[2]] ? `Bot ${relP[2] + 1}` : `Player ${relP[2] + 1}`;
+    icons.left.innerText = isBotArray[relP[2]] ? '🤖' : `P${relP[2] + 1}`;
 }
 
 socket.on('updateHand', (cards) => {
@@ -156,14 +167,16 @@ socket.on('updateHand', (cards) => {
 });
 
 socket.on('gameState', (state) => {
+    lobby.style.display = 'none'; // Ensure lobby hides when game runs
     if (state.eventType) playSound(state.eventType);
+
+    updateSeatLabels(state.isBot);
 
     t1Dehle.innerText = state.teams[0].dehle;
     t1Cards.innerText = state.teams[0].cards;
     t2Dehle.innerText = state.teams[1].dehle;
     t2Cards.innerText = state.teams[1].cards;
 
-    // Hukum Display
     if (state.hukumRevealed) {
         let color = (state.hukumSuit === '♥' || state.hukumSuit === '♦') ? 'text-red-500' : 'text-amber-400';
         hukumDisplay.innerHTML = `<span class="${color} text-lg">${state.hukumSuit}</span>`;
@@ -173,7 +186,6 @@ socket.on('gameState', (state) => {
 
     poolCountEl.innerText = state.centerPool.length;
 
-    // Turn Highlights
     const activePlayer = state.currentTurn;
     isMyTurn = (activePlayer + 1) === myPlayerNumber;
 
@@ -181,11 +193,11 @@ socket.on('gameState', (state) => {
         turnBadge.innerText = "Aapki Chaal!";
         turnBadge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500 text-black animate-pulse";
     } else {
-        turnBadge.innerText = `P${activePlayer + 1} ki baari`;
+        const isCurrentBot = state.isBot && state.isBot[activePlayer];
+        turnBadge.innerText = `${isCurrentBot ? 'Bot' : 'P'}${activePlayer + 1} soch raha hai...`;
         turnBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-400";
     }
 
-    // Relative active seat highlighting
     Object.values(rings).forEach(r => r.classList.remove('turn-active'));
     if (myPlayerNumber) {
         const relativeActive = (activePlayer - (myPlayerNumber - 1) + 4) % 4;
@@ -197,13 +209,11 @@ socket.on('gameState', (state) => {
 
     if (state.message) statusPill.innerText = state.message;
 
-    // 1. RENDER SCATTERED POOL (Table par bikhri hui patti)
+    // Render Scattered Pool
     scatteredPoolDiv.innerHTML = '';
     state.centerPool.forEach((card, idx) => {
         const cardEl = document.createElement('div');
         cardEl.className = `pool-card-scattered ${card.color}`;
-        
-        // Pseudo-random scattered angles & offsets based on card index
         const angle = ((idx * 37) % 70) - 35;
         const offsetX = ((idx * 17) % 50) - 25;
         const offsetY = ((idx * 23) % 40) - 20;
@@ -217,7 +227,7 @@ socket.on('gameState', (state) => {
         scatteredPoolDiv.appendChild(cardEl);
     });
 
-    // 2. RENDER CURRENT TRICK CARDS (Chaal ki 4 patti)
+    // Render Active Trick
     activeTrickDiv.innerHTML = '';
     const seatOffsets = {
         0: { x: 0, y: 38 },   // Bottom
