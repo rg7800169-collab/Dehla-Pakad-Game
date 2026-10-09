@@ -9,7 +9,7 @@
 </head>
 <body class="bg-stone-950 text-white h-screen flex flex-col justify-between overflow-hidden select-none">
 
-    <!-- Waiting Screen -->
+    <!-- Waiting Screen (Lobby) -->
     <div id="lobby" class="fixed inset-0 bg-stone-950/95 backdrop-blur-md flex flex-col justify-center items-center z-50 p-6 text-center">
         <div class="w-16 h-16 mb-4 rounded-2xl bg-amber-500/20 border-2 border-amber-400 flex items-center justify-center text-3xl shadow-lg">🃏</div>
         <h1 class="text-3xl font-black text-amber-400 tracking-wide mb-1">DEHLA PAKAD</h1>
@@ -19,9 +19,16 @@
             <span class="text-xs text-stone-400 font-semibold uppercase tracking-wider">Players Online</span>
             <p class="text-3xl font-extrabold text-emerald-400 mt-1"><span id="player-count">1</span> / 4</p>
         </div>
-        <div id="my-player-badge" class="px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold">
+
+        <div id="my-player-badge" class="px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold mb-6">
             Aapka Number: Player 1
         </div>
+
+        <!-- Start Game Button -->
+        <button id="start-game-btn" class="w-64 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-95 text-stone-950 font-black py-3 px-6 rounded-2xl shadow-lg shadow-amber-500/20 transition-all flex flex-col items-center">
+            <span class="text-sm uppercase tracking-wider">Khel Shuru Karein</span>
+            <span class="text-[10px] font-semibold text-stone-900/80">Khali jagaho par Bots kheleinge</span>
+        </button>
     </div>
 
     <!-- Top Navigation Bar -->
@@ -49,55 +56,47 @@
 
     <!-- Main Game Arena (Felt Table) -->
     <main class="flex-1 relative flex flex-col justify-center items-center p-2 overflow-hidden">
-
         <!-- Status Pill -->
         <div id="status-pill" class="absolute top-2 z-20 px-3 py-1 rounded-full bg-stone-900/90 border border-stone-700 text-stone-200 text-xs font-medium shadow-md">
             Khiladiyon ka intezaar...
         </div>
 
-        <!-- Oval Green Felt Table -->
+        <!-- Felt Table -->
         <div class="felt-table w-[92vw] max-w-[420px] h-[58vh] max-h-[460px] rounded-[50px] relative flex justify-center items-center shadow-2xl border-[7px] border-amber-950">
             
-            <!-- Table Center: Gojh (Scattered Accumulated Pool) -->
-            <div id="scattered-pool" class="absolute inset-0 flex justify-center items-center pointer-events-none">
-                <!-- Stacked/scattered pool cards will render here -->
-            </div>
+            <div id="scattered-pool" class="absolute inset-0 flex justify-center items-center pointer-events-none"></div>
 
-            <!-- Pool Counter Tag -->
             <div id="pool-badge" class="absolute z-10 px-2.5 py-0.5 rounded-full bg-black/70 border border-amber-500/40 text-[11px] font-bold text-amber-300 shadow">
                 Pool: <span id="pool-count">0</span> Cards
             </div>
 
-            <!-- Active Trick Center (Current hand cards) -->
-            <div id="active-trick" class="absolute inset-0 flex justify-center items-center pointer-events-none z-10">
-                <!-- Currently played trick cards -->
-            </div>
+            <div id="active-trick" class="absolute inset-0 flex justify-center items-center pointer-events-none z-10"></div>
 
-            <!-- Seat: TOP (Partner) -->
+            <!-- Seat: TOP -->
             <div id="seat-top" class="player-seat absolute top-2 flex flex-col items-center">
                 <div class="avatar-ring" id="ring-top">
-                    <div class="avatar-icon">P3</div>
+                    <div class="avatar-icon" id="icon-top">P3</div>
                 </div>
                 <span class="player-name" id="name-top">Partner</span>
             </div>
 
-            <!-- Seat: LEFT (Opponent 1) -->
+            <!-- Seat: LEFT -->
             <div id="seat-left" class="player-seat absolute left-2 flex flex-col items-center">
                 <div class="avatar-ring" id="ring-left">
-                    <div class="avatar-icon">P2</div>
+                    <div class="avatar-icon" id="icon-left">P2</div>
                 </div>
                 <span class="player-name" id="name-left">Player 2</span>
             </div>
 
-            <!-- Seat: RIGHT (Opponent 2) -->
+            <!-- Seat: RIGHT -->
             <div id="seat-right" class="player-seat absolute right-2 flex flex-col items-center">
                 <div class="avatar-ring" id="ring-right">
-                    <div class="avatar-icon">P4</div>
+                    <div class="avatar-icon" id="icon-right">P4</div>
                 </div>
                 <span class="player-name" id="name-right">Player 4</span>
             </div>
 
-            <!-- Seat: BOTTOM (You) -->
+            <!-- Seat: BOTTOM (Aap) -->
             <div id="seat-bottom" class="player-seat absolute bottom-2 flex flex-col items-center">
                 <span class="player-name text-amber-300 font-bold" id="name-bottom">Aap (P1)</span>
                 <div class="avatar-ring" id="ring-bottom">
@@ -108,15 +107,13 @@
         </div>
     </main>
 
-    <!-- Bottom Player Cards (Hand) -->
+    <!-- Bottom Hand Container -->
     <footer class="bg-stone-900/95 border-t border-stone-800 p-2 z-30 pb-safe">
         <div class="flex justify-between items-center px-2 mb-1">
             <span class="text-[11px] text-amber-400 font-bold uppercase tracking-wider">Aapki Patti</span>
             <span id="turn-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-400">Intezaar...</span>
         </div>
-        <div id="hand-container" class="flex justify-start sm:justify-center gap-1.5 overflow-x-auto pb-2 px-1 min-h-[92px] items-end custom-scroll">
-            <!-- Cards rendered dynamically -->
-        </div>
+        <div id="hand-container" class="flex justify-start sm:justify-center gap-1.5 overflow-x-auto pb-2 px-1 min-h-[92px] items-end custom-scroll"></div>
     </footer>
 
     <script src="/socket.io/socket.io.js"></script>
