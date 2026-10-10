@@ -104,12 +104,13 @@ io.on('connection', (socket) => {
             ],
             hukumSuit: null,
             hukumRevealed: false,
+            remainingCardsDealt: false, // 8 patti baantne ka check
             currentTurn: 0,
             leadSuit: null,
             currentTrick: [],
             centerPool: [],
             trickCount: 1,
-            lastWinningPlayer: null, // Same player consecutive check
+            lastWinningPlayer: null,
             turnTimer: null
         };
 
@@ -216,13 +217,14 @@ function startGame(roomId) {
     room.playersHands = [[], [], [], []];
     room.hukumSuit = null;
     room.hukumRevealed = false;
+    room.remainingCardsDealt = false;
     room.currentTurn = 0;
     room.currentTrick = [];
     room.centerPool = [];
     room.trickCount = 1;
     room.lastWinningPlayer = null;
 
-    // Pehle sirf 5 patti baantein (Batch 1)
+    // Pehle sirf 5 patti baantein
     dealCards(room, 5);
     io.to(roomId).emit('gameStarted');
     broadcastState(roomId, "Khel shuru! Player 1 pehli chaal chalein.", "start");
@@ -299,10 +301,19 @@ function handleCardPlay(roomId, playerIndex, cardIndex) {
         hand.splice(cardIndex, 1);
         room.currentTrick.push({ player: playerIndex, card });
 
-        // Hukum kholna
+        // ========================================================
+        // HUKUM KHULTE HI BACHI HUI 8 PATTI BAANTNA
+        // ========================================================
         if (!hasLeadSuit && !room.hukumRevealed) {
             room.hukumSuit = card.suit;
             room.hukumRevealed = true;
+
+            // Jaise hukum khula, bachi hui 8 patti baant dein
+            if (!room.remainingCardsDealt && room.deck.length > 0) {
+                dealCards(room, 8);
+                room.remainingCardsDealt = true;
+            }
+
             broadcastState(roomId, `HUKUM KHULA: ${room.hukumSuit}!`, "hukum");
         }
     } else {
@@ -360,9 +371,6 @@ function resolveTrick(roomId) {
     // DEHLA PAKAD NIYAM: SAME PLAYER 2 TRICKS RULE
     // ========================================================
     const isSamePlayerTwice = (room.lastWinningPlayer !== null && room.lastWinningPlayer === winnerPlayer);
-    const isPartnerTrick = (room.lastWinningPlayer !== null && 
-                            room.lastWinningPlayer !== winnerPlayer && 
-                            (room.lastWinningPlayer % 2 === winningTeamIndex));
     const isLastTrick = (room.trickCount === 13);
 
     let handCollected = false;
@@ -374,24 +382,11 @@ function resolveTrick(roomId) {
         room.teams[winningTeamIndex].cards += room.centerPool.length;
         room.teams[winningTeamIndex].dehle += dehleCount;
 
-        if (isLastTrick && !isSamePlayerTwice) {
-            turnStatusMsg = `Aakhiri trick Player ${winnerPlayer + 1} ne jeeti! ${room.teams[winningTeamIndex].name} ne pool uthaya (${room.centerPool.length} Cards)!`;
-        } else {
-            turnStatusMsg = `Player ${winnerPlayer + 1} ne lagataar 2 tricks banayi! ${room.teams[winningTeamIndex].name} ne pool uthaya (${room.centerPool.length} Cards, ${dehleCount} Dehle)!`;
-        }
-
         room.centerPool = [];
         room.lastWinningPlayer = null; // Reset
         handCollected = true;
     } else {
-        // Patti NAHI uthegi (Dost/Partner ya Opponent ne jeeta)
-        if (isPartnerTrick) {
-            turnStatusMsg = `Player ${winnerPlayer + 1} ne trick jeeti! (Partner ki jeet par patti nahi uthegi, table par ${room.centerPool.length} cards hain)`;
-        } else {
-            turnStatusMsg = `Player ${winnerPlayer + 1} (${room.isBot[winnerPlayer] ? 'Bot' : 'Player'}) ne trick jeeti! Patti table par hai (${room.centerPool.length} Cards).`;
-        }
-        
-        // Ab is player ki streak shuru hogi
+        // Patti nahi uthegi (Partner ya Opponent ki jeet par streak update)
         room.lastWinningPlayer = winnerPlayer;
     }
 
@@ -399,15 +394,10 @@ function resolveTrick(roomId) {
     room.leadSuit = null;
     room.currentTurn = winnerPlayer;
 
-    // ========================================================
-    // BATCH-WISE CARD DEALING (5, 4, 4)
-    // ========================================================
-    if (room.trickCount === 5) {
-        dealCards(room, 4);
-        turnStatusMsg += " | Agli 4-4 patti baanti gayi!";
-    } else if (room.trickCount === 9) {
-        dealCards(room, 4);
-        turnStatusMsg += " | Aakhiri 4-4 patti baanti gayi!";
+    // Fallback: Agar 5 tricks tak hukum na khula ho, toh 8 patti baant dein taaki khel ruke na
+    if (room.trickCount === 5 && !room.remainingCardsDealt && room.deck.length > 0) {
+        dealCards(room, 8);
+        room.remainingCardsDealt = true;
     }
 
     room.trickCount++;
@@ -465,4 +455,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server live on port ${PORT}`);
 });
-                                             
+        
