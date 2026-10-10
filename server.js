@@ -17,7 +17,6 @@ const SUITS = ['♠', '♥', '♣', '♦'];
 const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 const RANK_VALUES = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
 
-// Har room ka alag state store karne ke liye
 let rooms = {};
 
 function generateRoomId() {
@@ -110,8 +109,7 @@ io.on('connection', (socket) => {
             currentTrick: [],
             centerPool: [],
             trickCount: 1,
-            lastWinningTeam: null,
-            consecutiveWins: 0,
+            lastWinningPlayer: null, // Same player 2 tricks track karne ke liye
             turnTimer: null
         };
 
@@ -222,9 +220,9 @@ function startGame(roomId) {
     room.currentTrick = [];
     room.centerPool = [];
     room.trickCount = 1;
-    room.lastWinningTeam = null;
-    room.consecutiveWins = 0;
+    room.lastWinningPlayer = null;
 
+    // Pehle sirf 5 patti baantein (Batch 1)
     dealCards(room, 5);
     io.to(roomId).emit('gameStarted');
     broadcastState(roomId, "Khel shuru! Player 1 pehli chaal chalein.", "start");
@@ -301,11 +299,11 @@ function handleCardPlay(roomId, playerIndex, cardIndex) {
         hand.splice(cardIndex, 1);
         room.currentTrick.push({ player: playerIndex, card });
 
+        // Hukum reveal hone par turant patti NAHI bategi
         if (!hasLeadSuit && !room.hukumRevealed) {
             room.hukumSuit = card.suit;
             room.hukumRevealed = true;
-            dealCards(room, 8);
-            broadcastState(roomId, `HUKUM KHULA: ${room.hukumSuit}! Sabhi ko bache 8 cards mil gaye.`, "hukum");
+            broadcastState(roomId, `HUKUM KHULA: ${room.hukumSuit}!`, "hukum");
         }
     } else {
         room.leadSuit = card.suit;
@@ -319,7 +317,7 @@ function handleCardPlay(roomId, playerIndex, cardIndex) {
 
     if (room.currentTrick.length === 4) {
         broadcastState(roomId, `Chaal poori hui...`, "cardPlay");
-        setTimeout(() => resolveTrick(roomId), 1400);
+        setTimeout(() => resolveTrick(roomId), 1200);
     } else {
         room.currentTurn = (room.currentTurn + 1) % 4;
         broadcastState(roomId, `Player ${room.currentTurn + 1} (${room.isBot[room.currentTurn] ? 'Bot' : 'Player'}) ki baari`, "cardPlay");
@@ -355,32 +353,50 @@ function resolveTrick(roomId) {
     let winnerPlayer = winningTrick.player;
     let winningTeamIndex = winnerPlayer % 2;
 
+    // Center pool mein 4 cards daalein
     room.centerPool.push(...room.currentTrick.map(t => t.card));
 
-    if (room.lastWinningTeam === winningTeamIndex) {
-        room.consecutiveWins++;
-    } else {
-        room.lastWinningTeam = winningTeamIndex;
-        room.consecutiveWins = 1;
-    }
+    // ========================================================
+    // DEHLA PAKAD NIYAM: SAME PLAYER 2 TRICKS RULE
+    // ========================================================
+    const isSamePlayerTwice = (room.lastWinningPlayer !== null && room.lastWinningPlayer === winnerPlayer);
+    const isLastTrick = (room.trickCount === 13);
 
     let handCollected = false;
     let turnStatusMsg = `Player ${winnerPlayer + 1} (${room.isBot[winnerPlayer] ? 'Bot' : 'Player'}) ne trick jeeti!`;
 
-    if (room.consecutiveWins >= 2 || room.trickCount === 13) {
+    if (isSamePlayerTwice || isLastTrick) {
+        // Patti uthayi gayi!
         let dehleCount = room.centerPool.filter(c => c.isDehla).length;
         room.teams[winningTeamIndex].cards += room.centerPool.length;
         room.teams[winningTeamIndex].dehle += dehleCount;
 
         turnStatusMsg = `${room.teams[winningTeamIndex].name} ne pool utha liya (${room.centerPool.length} Cards, ${dehleCount} Dehle)!`;
         room.centerPool = [];
-        room.consecutiveWins = 0;
+        room.lastWinningPlayer = null; // Reset
         handCollected = true;
+    } else {
+        // Patti nahi uthegi (Partner jeete toh bhi table par rahegi)
+        room.lastWinningPlayer = winnerPlayer;
     }
 
     room.currentTrick = [];
     room.leadSuit = null;
     room.currentTurn = winnerPlayer;
+
+    // ========================================================
+    // BATCH-WISE CARD DEALING (5, 4, 4)
+    // ========================================================
+    if (room.trickCount === 5) {
+        // 5 chaal poori hone par agla 4 patti ka batch baantein
+        dealCards(room, 4);
+        turnStatusMsg += " | Agli 4-4 patti baanti gayi!";
+    } else if (room.trickCount === 9) {
+        // 9 chaal poori hone par aakhiri 4 patti ka batch baantein
+        dealCards(room, 4);
+        turnStatusMsg += " | Aakhiri 4-4 patti baanti gayi!";
+    }
+
     room.trickCount++;
 
     if (room.trickCount > 13) {
