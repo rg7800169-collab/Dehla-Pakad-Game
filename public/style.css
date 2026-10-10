@@ -3,96 +3,177 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    background-color: #0c0a09;
     overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-#rotate-warning {
-    display: none;
-}
-@media screen and (orientation: portrait) {
-    #rotate-warning {
-        display: flex !important;
-    }
-}
-
-.phone-rotate-icon {
-    animation: rotatePhone 2s infinite ease-in-out;
-}
-@keyframes rotatePhone {
-    0% { transform: rotate(0deg); }
-    50% { transform: rotate(-90deg); }
-    100% { transform: rotate(0deg); }
-}
-
-.landscape-table {
-    width: 90vw;
-    max-width: 720px;
-    height: 54vh;
-    max-height: 250px;
-    background: radial-gradient(ellipse at center, #1e5a32 0%, #0d381d 75%, #061c0d 100%);
-    border-radius: 120px;
-    border: 6px solid #451a03;
-    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.9), 0 8px 25px rgba(0, 0, 0, 0.8);
-    outline: 2px dashed rgba(212, 175, 55, 0.3);
-    outline-offset: -8px;
+/* 1. REALISTIC WOODEN PLANK TABLE BACKGROUND */
+.wooden-bg {
+    background-color: #d89139;
+    background-image: 
+        repeating-linear-gradient(
+            0deg,
+            rgba(65, 34, 10, 0.35) 0px,
+            rgba(65, 34, 10, 0.35) 3px,
+            transparent 3px,
+            transparent 70px
+        ),
+        linear-gradient(
+            90deg,
+            #c87c26 0%,
+            #e49d43 25%,
+            #c87c26 50%,
+            #df983e 75%,
+            #c2761f 100%
+        );
+    box-shadow: inset 0 0 100px rgba(50, 20, 0, 0.55);
 }
 
+/* 2. TOP WOODEN BUTTONS */
+.wood-btn {
+    background: linear-gradient(145deg, #be6e3a, #8f481c);
+    border: 2px solid #57290d;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.3);
+    border-radius: 10px;
+    color: #fff2df;
+}
+.wood-btn:active {
+    transform: scale(0.94);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
+}
+
+/* 3. BOT CARD FAN (Avatars ke peeche bikhri hui patti) */
+.bot-card-fan {
+    position: absolute;
+    width: 44px;
+    height: 30px;
+    background: repeating-linear-gradient(
+        45deg,
+        #b91c1c,
+        #b91c1c 3px,
+        #991b1b 3px,
+        #991b1b 6px
+    );
+    border: 1.5px solid #ffffff;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    z-index: 5;
+}
+.fan-top {
+    bottom: -14px;
+    transform: rotate(180deg);
+}
+.fan-left {
+    right: -16px;
+    transform: rotate(90deg);
+}
+.fan-right {
+    left: -16px;
+    transform: rotate(-90deg);
+}
+
+/* 4. CIRCLE AVATARS & PILL BADGES */
+.avatar-circle {
+    width: 46px;
+    height: 46px;
+    background: #ffffff;
+    border: 2.5px solid #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.45);
+    position: relative;
+    z-index: 10;
+}
+.avatar-circle.turn-glow {
+    border-color: #22c55e !important;
+    box-shadow: 0 0 16px #22c55e, 0 4px 10px rgba(0,0,0,0.5);
+    transform: scale(1.08);
+}
+.pill-badge {
+    background: rgba(18, 14, 11, 0.88);
+    color: #f1f5f9;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 7px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    white-space: nowrap;
+}
+
+/* 5. PLAYING CARDS (Crisp Realistic Design) */
+.card-face {
+    background: #ffffff !important;
+    border-radius: 5px;
+    border: 1px solid #94a3b8;
+    box-shadow: -2px 2px 6px rgba(0, 0, 0, 0.45);
+    position: relative;
+    user-select: none;
+    box-sizing: border-box;
+}
+.card-face.red, .card-face.red * { color: #dc2626 !important; }
+.card-face.black, .card-face.black * { color: #0f172a !important; }
+
+/* Hand Cards Layout */
 #hand-container {
-    height: 76px;
-    max-width: 96vw;
+    height: 94px;
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    position: relative;
     padding-bottom: 2px;
 }
-
 .hand-card {
-    width: 46px;
-    height: 68px;
-    background-color: #ffffff !important;
-    border-radius: 5px;
-    border: 1px solid #94a3b8;
-    box-shadow: -2px 0 6px rgba(0, 0, 0, 0.6);
+    width: 54px;
+    height: 82px;
     margin-left: -20px;
-    position: relative;
     cursor: pointer;
     flex-shrink: 0;
-    user-select: none;
-    transition: transform 0.15s ease, z-index 0.15s ease, border-color 0.15s ease;
+    transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), z-index 0.15s;
     touch-action: manipulation;
 }
-
 .hand-card:first-child {
     margin-left: 0 !important;
 }
-
 .hand-card:hover, .hand-card:active {
-    transform: translateY(-20px) scale(1.15) !important;
+    transform: translateY(-24px) scale(1.1) !important;
     z-index: 99 !important;
-    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.6);
     border-color: #f59e0b !important;
 }
 
-.my-turn-card {
-    border-color: #10b981 !important;
-    animation: gentleBounce 1.2s infinite alternate ease-in-out;
-}
-@keyframes gentleBounce {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-6px); }
-}
-
-.hand-card.red, .active-trick-card.red, .pool-card-scattered.red,
-.hand-card.red *, .active-trick-card.red *, .pool-card-scattered.red * {
-    color: #dc2626 !important;
-}
-.hand-card.black, .active-trick-card.black, .pool-card-scattered.black,
-.hand-card.black *, .active-trick-card.black *, .pool-card-scattered.black * {
-    color: #0f172a !important;
+/* 6. CENTER PLAYED CARDS (Rotated 90° for Left & Right) */
+.active-trick-card {
+    position: absolute;
+    width: 52px;
+    height: 78px;
+    background: #ffffff !important;
+    border-radius: 6px;
+    border: 1.5px solid #cbd5e1;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3px 4px;
+    z-index: 25;
 }
 
+/* Center Pool Cards (Gojh) */
+.pool-card-scattered {
+    position: absolute;
+    width: 38px;
+    height: 56px;
+    border-radius: 4px;
+    border: 1px solid #94a3b8;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    opacity: 0.94;
+    pointer-events: none;
+}
+
+/* Corner & Center Symbols */
 .card-corner {
     position: absolute;
     top: 2px;
@@ -103,89 +184,24 @@ html, body {
     line-height: 1;
     pointer-events: none;
 }
-.card-corner .corner-rank {
-    font-size: 13px;
-    font-weight: 900;
-}
-.card-corner .corner-suit {
-    font-size: 11px;
-    line-height: 1;
-}
-
+.corner-rank { font-size: 14px; font-weight: 900; }
+.corner-suit { font-size: 12px; line-height: 1; }
 .card-center-suit {
     position: absolute;
     top: 52%;
     left: 54%;
     transform: translate(-50%, -50%);
-    font-size: 22px;
+    font-size: 26px;
     line-height: 1;
     pointer-events: none;
 }
 
-.active-trick-card {
-    position: absolute;
-    width: 44px;
-    height: 64px;
-    background-color: #ffffff !important;
-    border-radius: 5px;
-    border: 2px solid #fbbf24;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 2px 4px;
-    font-weight: 900;
-    z-index: 25;
+/* Portrait Warning */
+#rotate-warning { display: none; }
+@media screen and (orientation: portrait) {
+    #rotate-warning { display: flex !important; }
 }
 
-.pool-card-scattered {
-    position: absolute;
-    width: 36px;
-    height: 52px;
-    background-color: #f8fafc !important;
-    border-radius: 4px;
-    border: 1px solid #94a3b8;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 1px 3px;
-    font-weight: 800;
-    opacity: 0.92;
-    pointer-events: none;
-}
-
-.player-seat { z-index: 15; }
-.avatar-ring {
-    width: 32px;
-    height: 32px;
-    border-radius: 9999px;
-    border: 2px solid #57534e;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #292524;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    transition: all 0.2s ease;
-}
-.avatar-ring.turn-active {
-    border-color: #22c55e;
-    box-shadow: 0 0 12px #22c55e;
-    transform: scale(1.1);
-}
-.avatar-icon { font-size: 12px; }
-.player-name {
-    font-size: 9px;
-    color: #e2e8f0;
-    margin-top: 1px;
-    text-shadow: 0 1px 2px black;
-    font-weight: 700;
-}
-
+/* Modal */
 #game-over-modal { display: none; }
 #game-over-modal.show-modal { display: flex !important; }
-.modal-card { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-@keyframes popIn {
-    0% { transform: scale(0.8) translateY(20px); opacity: 0; }
-    100% { transform: scale(1) translateY(0); opacity: 1; }
-}
