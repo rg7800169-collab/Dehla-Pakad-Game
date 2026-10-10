@@ -15,15 +15,15 @@
     <div id="rotate-warning" class="fixed inset-0 bg-stone-950/98 z-50 flex flex-col justify-center items-center text-center p-6">
         <div class="mb-4 text-6xl animate-pulse">🔄📱</div>
         <h2 class="text-2xl font-black text-amber-400 mb-2">Phone Ko Rotate Karein</h2>
-        <p class="text-sm text-stone-300 max-w-xs">Full Dehla Pakad landscape interface ke liye phone ko aada (Horizontal) karein.</p>
+        <p class="text-sm text-stone-300 max-w-xs">Full Dehla Pakad landscape interface ke liye phone ko horizontal karein.</p>
     </div>
 
     <!-- ==========================================================
-         CALLBREAK / DEHLA PAKAD MAIN LOBBY
+         MAIN MENU / HOME LOBBY
          ========================================================== -->
     <div id="home-lobby" class="fixed inset-0 z-40 flex flex-col justify-between p-3 wooden-bg">
         
-        <!-- Header Bar -->
+        <!-- Header -->
         <header class="w-full flex justify-between items-center z-10">
             <button class="wood-square-btn flex items-center justify-center text-xl shadow-md">
                 <span>👥</span>
@@ -53,7 +53,7 @@
             </div>
         </header>
 
-        <!-- 2x2 Game Mode Cards -->
+        <!-- 2x2 Mode Selection -->
         <main class="flex-1 flex justify-center items-center px-4">
             <div class="grid grid-cols-2 gap-4 sm:gap-6 w-full max-w-xl">
                 <div id="btn-mode-practice" class="mode-card cursor-pointer">
@@ -83,7 +83,7 @@
             </div>
         </main>
 
-        <!-- Bottom Action Bar -->
+        <!-- Bottom Actions -->
         <footer class="w-full flex justify-end items-center gap-2 pr-1 z-10">
             <div class="claim-gift-box flex items-center gap-1.5 px-3 py-1.5 cursor-pointer">
                 <span class="text-lg">🎧</span>
@@ -142,7 +142,7 @@
     </div>
 
     <!-- ==========================================================
-         ACTUAL GAME ARENA
+         GAME ARENA TABLE
          ========================================================== -->
     <div id="game-arena" class="w-full h-full relative flex flex-col justify-between overflow-hidden hidden">
 
@@ -177,10 +177,10 @@
             </div>
         </header>
 
-        <!-- Main Arena -->
+        <!-- Arena Table -->
         <main class="flex-1 relative w-full h-full">
 
-            <!-- 1. TOP BOT (bot3) - Header ke paas Shifted -->
+            <!-- 1. TOP BOT (bot3 / Partner) - Header ke paas Shifted -->
             <div id="seat-top" class="absolute -top-1 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30">
                 <span class="pill-badge" id="name-top">bot3 ♠</span>
                 <div class="relative flex flex-col items-center">
@@ -216,7 +216,7 @@
                 <span class="pill-badge" id="score-right">0/0</span>
             </div>
 
-            <!-- 4. Center Arena (Pool Badge Removed) -->
+            <!-- 4. Center Arena (Pool 4 Section Removed) -->
             <div id="center-table-arena">
                 <div id="scattered-pool" class="absolute inset-0 flex justify-center items-center"></div>
                 <div id="active-trick" class="absolute inset-0"></div>
@@ -224,7 +224,7 @@
 
         </main>
 
-        <!-- Player Bottom Bar -->
+        <!-- Bottom Player Arena -->
         <footer class="w-full relative z-30 flex flex-col items-center pb-1">
             <div id="turn-badge" class="pill-badge text-[11px] font-black px-4 py-0.5 mb-0.5 shadow-lg bg-black/90 border-amber-500/40 text-amber-300">
                 Your Turn
@@ -245,7 +245,7 @@
 
     </div>
 
-    <!-- Game Over Modal -->
+    <!-- Victory Modal -->
     <div id="game-over-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden justify-center items-center z-50 p-4">
         <div class="bg-gradient-to-b from-stone-900 to-stone-950 border border-amber-500/50 rounded-2xl p-5 w-full max-w-sm text-center shadow-2xl relative">
             <div id="kot-banner" class="hidden mb-2">
