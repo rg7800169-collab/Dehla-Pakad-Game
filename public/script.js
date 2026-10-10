@@ -28,23 +28,6 @@ function playSound(type) {
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
             osc.start(now);
             osc.stop(now + 0.08);
-        } else if (type === 'poolCollect') {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(220, now);
-            osc.frequency.exponentialRampToValueAtTime(660, now + 0.25);
-            gain.gain.setValueAtTime(0.4, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-            osc.start(now);
-            osc.stop(now + 0.25);
-        } else if (type === 'hukum') {
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(523.25, now);
-            osc.frequency.setValueAtTime(659.25, now + 0.1);
-            osc.frequency.setValueAtTime(783.99, now + 0.2);
-            gain.gain.setValueAtTime(0.5, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-            osc.start(now);
-            osc.stop(now + 0.4);
         } else if (type === 'turnAlert') {
             osc.type = 'sine';
             osc.frequency.setValueAtTime(880, now);
@@ -58,7 +41,7 @@ function playSound(type) {
 
 document.getElementById('sound-btn').onclick = () => {
     soundEnabled = !soundEnabled;
-    document.getElementById('sound-btn').innerText = soundEnabled ? '🔊' : '🔇';
+    document.getElementById('sound-btn').innerHTML = soundEnabled ? '<span>🔊</span>' : '<span>🔇</span>';
 };
 
 document.getElementById('fullscreen-btn').onclick = () => {
@@ -76,11 +59,10 @@ const createRoomBtn = document.getElementById('create-room-btn');
 const joinRoomBtn = document.getElementById('join-room-btn');
 const roomInput = document.getElementById('room-input');
 const displayRoomCode = document.getElementById('display-room-code');
-const activeRoomTag = document.getElementById('active-room-tag');
 const startBtn = document.getElementById('start-game-btn');
 const playerCountEl = document.getElementById('player-count');
 
-const statusPill = document.getElementById('status-pill');
+const roundNum = document.getElementById('round-num');
 const turnBadge = document.getElementById('turn-badge');
 const handContainer = document.getElementById('hand-container');
 const scatteredPoolDiv = document.getElementById('scattered-pool');
@@ -88,103 +70,57 @@ const activeTrickDiv = document.getElementById('active-trick');
 const poolCountEl = document.getElementById('pool-count');
 const hukumDisplay = document.getElementById('hukum-display');
 
-const t1Dehle = document.getElementById('t1-dehle');
-const t1Cards = document.getElementById('t1-cards');
-const t2Dehle = document.getElementById('t2-dehle');
-const t2Cards = document.getElementById('t2-cards');
-
-const rings = {
-    top: document.getElementById('ring-top'),
-    left: document.getElementById('ring-left'),
-    right: document.getElementById('ring-right')
-};
 const names = {
     top: document.getElementById('name-top'),
     left: document.getElementById('name-left'),
-    right: document.getElementById('name-right')
+    right: document.getElementById('name-right'),
+    bottom: document.getElementById('name-bottom')
 };
-const icons = {
-    top: document.getElementById('icon-top'),
-    left: document.getElementById('icon-left'),
-    right: document.getElementById('icon-right')
+const scores = {
+    top: document.getElementById('score-top'),
+    left: document.getElementById('score-left'),
+    right: document.getElementById('score-right'),
+    bottom: document.getElementById('score-bottom')
+};
+const rings = {
+    top: document.getElementById('ring-top'),
+    left: document.getElementById('ring-left'),
+    right: document.getElementById('ring-right'),
+    bottom: document.getElementById('ring-bottom')
 };
 
-// 1. Create Room Click
-createRoomBtn.onclick = () => {
-    socket.emit('createRoom');
-};
-
-// 2. Join Room Click
+createRoomBtn.onclick = () => { socket.emit('createRoom'); };
 joinRoomBtn.onclick = () => {
     const code = roomInput.value.trim();
-    if (!code) {
-        alert("Kripya 4-digit room code daalein!");
-        return;
-    }
+    if (!code) return alert("Room code daalein!");
     socket.emit('joinRoom', code);
 };
-
-// Start Game Click
-startBtn.onclick = () => {
-    socket.emit('requestStartGame');
-};
+startBtn.onclick = () => { socket.emit('requestStartGame'); };
 
 socket.on('roomCreated', (data) => {
     currentRoomId = data.roomId;
     myPlayerNumber = data.playerNumber;
     displayRoomCode.innerText = data.roomId;
-    activeRoomTag.innerText = data.roomId;
-
     roomSelectionBox.classList.add('hidden');
     roomWaitingBox.classList.remove('hidden');
 });
-
 socket.on('roomJoined', (data) => {
     currentRoomId = data.roomId;
     myPlayerNumber = data.playerNumber;
     displayRoomCode.innerText = data.roomId;
-    activeRoomTag.innerText = data.roomId;
-
     roomSelectionBox.classList.add('hidden');
     roomWaitingBox.classList.remove('hidden');
 });
-
-socket.on('playerAssigned', (num) => {
-    myPlayerNumber = Number(num);
-});
-
-socket.on('playerCount', (count) => {
-    playerCountEl.innerText = count;
-});
-
+socket.on('playerAssigned', (num) => { myPlayerNumber = Number(num); });
+socket.on('playerCount', (count) => { playerCountEl.innerText = count; });
 socket.on('gameStarted', () => {
     lobby.style.display = 'none';
     playSound('turnAlert');
 });
 
-function updateSeatLabels(isBotArray) {
-    if (!isBotArray) return;
-    const me = (myPlayerNumber || 1) - 1;
-
-    const relP = [
-        (me + 1) % 4, // Right
-        (me + 2) % 4, // Top (Partner)
-        (me + 3) % 4  // Left
-    ];
-
-    names.right.innerText = isBotArray[relP[0]] ? `Bot ${relP[0] + 1}` : `Player ${relP[0] + 1}`;
-    icons.right.innerText = isBotArray[relP[0]] ? '🤖' : `P${relP[0] + 1}`;
-
-    names.top.innerText = isBotArray[relP[1]] ? `Bot ${relP[1] + 1} (Partner)` : `Partner (P${relP[1] + 1})`;
-    icons.top.innerText = isBotArray[relP[1]] ? '🤖' : `P${relP[1] + 1}`;
-
-    names.left.innerText = isBotArray[relP[2]] ? `Bot ${relP[2] + 1}` : `Player ${relP[2] + 1}`;
-    icons.left.innerText = isBotArray[relP[2]] ? '🤖' : `P${relP[2] + 1}`;
-}
-
+// User Hand Rendering
 socket.on('updateHand', (cards) => {
     handContainer.innerHTML = '';
-
     const suitOrder = { '♠': 1, '♥': 2, '♣': 3, '♦': 4 };
     const rankValues = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
 
@@ -195,18 +131,16 @@ socket.on('updateHand', (cards) => {
 
     cards.forEach((card, index) => {
         const el = document.createElement('div');
-        const textColor = (card.suit === '♥' || card.suit === '♦') ? '#dc2626' : '#0f172a';
-        
-        el.className = `hand-card ${card.color} ${isMyTurn ? 'my-turn-card' : ''}`;
+        const isRed = (card.suit === '♥' || card.suit === '♦');
+        el.className = `card-face hand-card ${isRed ? 'red' : 'black'}`;
         el.style.zIndex = index + 1;
-        el.style.color = textColor;
 
         el.innerHTML = `
-            <div class="card-corner" style="color: ${textColor};">
+            <div class="card-corner">
                 <span class="corner-rank">${card.rank}</span>
                 <span class="corner-suit">${card.suit}</span>
             </div>
-            <div class="card-center-suit" style="color: ${textColor};">${card.suit}</div>
+            <div class="card-center-suit">${card.suit}</div>
         `;
 
         el.onclick = () => {
@@ -214,98 +148,90 @@ socket.on('updateHand', (cards) => {
                 socket.emit('playCard', { suit: card.suit, rank: card.rank });
             }
         };
-
         handContainer.appendChild(el);
     });
 });
 
+// Game State Update
 socket.on('gameState', (state) => {
     lobby.style.display = 'none';
     if (state.eventType) playSound(state.eventType);
 
-    updateSeatLabels(state.isBot);
-
-    t1Dehle.innerText = state.teams[0].dehle;
-    t1Cards.innerText = state.teams[0].cards;
-    t2Dehle.innerText = state.teams[1].dehle;
-    t2Cards.innerText = state.teams[1].cards;
+    roundNum.innerText = state.trickCount || 1;
+    poolCountEl.innerText = state.centerPool.length;
 
     if (state.hukumRevealed) {
-        let color = (state.hukumSuit === '♥' || state.hukumSuit === '♦') ? 'text-red-500' : 'text-amber-400';
-        hukumDisplay.innerHTML = `<span class="${color} text-xs font-black">${state.hukumSuit}</span>`;
+        const isRed = (state.hukumSuit === '♥' || state.hukumSuit === '♦');
+        hukumDisplay.innerHTML = `<span class="${isRed ? 'text-red-500' : 'text-amber-400'} text-sm font-black">${state.hukumSuit}</span>`;
     } else {
         hukumDisplay.innerText = '🔒 Band';
     }
 
-    poolCountEl.innerText = state.centerPool.length;
+    // Scores
+    scores.bottom.innerText = `${state.teams[0].dehle}/${state.teams[0].cards}`;
+    scores.top.innerText = `${state.teams[0].dehle}/${state.teams[0].cards}`;
+    scores.left.innerText = `${state.teams[1].dehle}/${state.teams[1].cards}`;
+    scores.right.innerText = `${state.teams[1].dehle}/${state.teams[1].cards}`;
 
+    // Turn Highlights
     const activePlayer = state.currentTurn;
     isMyTurn = (activePlayer + 1) === myPlayerNumber;
 
     if (isMyTurn) {
-        turnBadge.innerText = "👉 AAPKI CHAAL (15s)";
-        turnBadge.className = "text-[10px] font-black px-3 py-0.5 rounded-full bg-emerald-400 text-stone-950 animate-bounce shadow-md shadow-emerald-500/50";
-        document.querySelectorAll('.hand-card').forEach(c => c.classList.add('my-turn-card'));
+        turnBadge.innerText = "Your Turn";
+        turnBadge.className = "pill-badge text-[11px] font-black px-4 py-1 mb-1 shadow-lg bg-emerald-500 text-stone-950 animate-bounce";
     } else {
-        const isCurrentBot = state.isBot && state.isBot[activePlayer];
-        turnBadge.innerText = `${isCurrentBot ? 'Bot' : 'P'}${activePlayer + 1} ki baari...`;
-        turnBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-400";
-        document.querySelectorAll('.hand-card').forEach(c => c.classList.remove('my-turn-card'));
+        turnBadge.innerText = `Waiting for P${activePlayer + 1}...`;
+        turnBadge.className = "pill-badge text-[11px] font-bold px-4 py-1 mb-1 shadow-md bg-black/80 text-stone-400";
     }
 
-    Object.values(rings).forEach(r => r.classList.remove('turn-active'));
-    if (myPlayerNumber) {
-        const relativeActive = (activePlayer - (myPlayerNumber - 1) + 4) % 4;
-        if (relativeActive === 1) rings.right.classList.add('turn-active');
-        else if (relativeActive === 2) rings.top.classList.add('turn-active');
-        else if (relativeActive === 3) rings.left.classList.add('turn-active');
-    }
+    // Avatars glow
+    Object.values(rings).forEach(r => r.classList.remove('turn-glow'));
+    const relActive = (activePlayer - (myPlayerNumber - 1) + 4) % 4;
+    if (relActive === 0) rings.bottom.classList.add('turn-glow');
+    else if (relActive === 1) rings.right.classList.add('turn-glow');
+    else if (relActive === 2) rings.top.classList.add('turn-glow');
+    else if (relActive === 3) rings.left.classList.add('turn-glow');
 
-    if (state.message) statusPill.innerText = state.message;
-
-    // Scattered Pool Rendering
+    // 1. Center Pool (Gojh)
     scatteredPoolDiv.innerHTML = '';
     state.centerPool.forEach((card, idx) => {
         const cardEl = document.createElement('div');
-        const textColor = (card.suit === '♥' || card.suit === '♦') ? '#dc2626' : '#0f172a';
-        cardEl.className = `pool-card-scattered ${card.color}`;
-        cardEl.style.color = textColor;
-
+        const isRed = (card.suit === '♥' || card.suit === '♦');
+        cardEl.className = `card-face pool-card-scattered ${isRed ? 'red' : 'black'}`;
         const angle = ((idx * 37) % 70) - 35;
         const offsetX = ((idx * 15) % 40) - 20;
         const offsetY = ((idx * 19) % 30) - 15;
-
         cardEl.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${angle}deg)`;
         cardEl.innerHTML = `
-            <div class="text-[9px] font-bold leading-none" style="color:${textColor};">${card.rank}</div>
-            <div class="text-xs text-center leading-none" style="color:${textColor};">${card.suit}</div>
-            <div class="text-[8px] text-right font-bold leading-none" style="color:${textColor};">${card.rank}</div>
+            <div class="text-[9px] font-bold leading-none p-1">${card.rank}${card.suit}</div>
         `;
         scatteredPoolDiv.appendChild(cardEl);
     });
 
-    // Active Trick Rendering
+    // 2. Center Trick Cards (With exact 90° Rotations like screenshot)
     activeTrickDiv.innerHTML = '';
-    const seatOffsets = {
-        0: { x: 0, y: 30 },
-        1: { x: 38, y: 0 },
-        2: { x: 0, y: -30 },
-        3: { x: -38, y: 0 }
+    const seatTransforms = {
+        0: { x: 0, y: 35, rotate: 0 },      // Bottom (You) - Facing standard
+        1: { x: 42, y: 0, rotate: -90 },    // Right Bot - Rotated -90°
+        2: { x: 0, y: -35, rotate: 0 },     // Top Bot - Facing down
+        3: { x: -42, y: 0, rotate: 90 }     // Left Bot - Rotated 90°
     };
 
     state.currentTrick.forEach((tc) => {
-        const relPos = myPlayerNumber ? (tc.player - (myPlayerNumber - 1) + 4) % 4 : tc.player;
-        const pos = seatOffsets[relPos] || { x: 0, y: 0 };
-        const textColor = (tc.card.suit === '♥' || tc.card.suit === '♦') ? '#dc2626' : '#0f172a';
+        const relPos = (tc.player - (myPlayerNumber - 1) + 4) % 4;
+        const conf = seatTransforms[relPos] || { x: 0, y: 0, rotate: 0 };
+        const isRed = (tc.card.suit === '♥' || tc.card.suit === '♦');
 
         const cardEl = document.createElement('div');
-        cardEl.className = `active-trick-card ${tc.card.color}`;
-        cardEl.style.color = textColor;
-        cardEl.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
+        cardEl.className = `card-face active-trick-card ${isRed ? 'red' : 'black'}`;
+        cardEl.style.transform = `translate(${conf.x}px, ${conf.y}px) rotate(${conf.rotate}deg)`;
         cardEl.innerHTML = `
-            <div class="text-[10px] font-black leading-none" style="color:${textColor};">${tc.card.rank}</div>
-            <div class="text-lg text-center leading-none" style="color:${textColor};">${tc.card.suit}</div>
-            <div class="text-[9px] text-right font-black leading-none" style="color:${textColor};">${tc.card.rank}</div>
+            <div class="card-corner">
+                <span class="corner-rank">${tc.card.rank}</span>
+                <span class="corner-suit">${tc.card.suit}</span>
+            </div>
+            <div class="card-center-suit">${tc.card.suit}</div>
         `;
         activeTrickDiv.appendChild(cardEl);
     });
@@ -315,34 +241,9 @@ socket.on('errorMsg', (msg) => { alert(msg); });
 
 socket.on('gameOverStats', (data) => {
     const modal = document.getElementById('game-over-modal');
-    if (!modal) {
-        alert(`Khel Khatam: ${data.winReason}`);
-        location.reload();
-        return;
-    }
-    const kotBanner = document.getElementById('kot-banner');
-    const winnerTitle = document.getElementById('winner-title');
-    const winnerReason = document.getElementById('winner-reason');
-    const trophy = document.getElementById('trophy-icon');
-
-    if (data.isKot) {
-        kotBanner.classList.remove('hidden');
-        trophy.innerText = "👑";
-    } else {
-        kotBanner.classList.add('hidden');
-        trophy.innerText = data.winningTeam ? "🏆" : "🤝";
-    }
-
-    winnerTitle.innerText = data.winningTeam ? `${data.winningTeam} Jeeti!` : "Match Draw!";
-    winnerReason.innerText = data.winReason;
-
-    document.getElementById('final-t1-dehle').innerText = data.teams[0].dehle;
-    document.getElementById('final-t1-cards').innerText = data.teams[0].cards;
-    document.getElementById('final-t2-dehle').innerText = data.teams[1].dehle;
-    document.getElementById('final-t2-cards').innerText = data.teams[1].cards;
-
+    document.getElementById('winner-title').innerText = data.winningTeam ? `${data.winningTeam} Jeeti!` : "Draw!";
+    document.getElementById('winner-reason').innerText = data.winReason;
     modal.classList.add('show-modal');
 });
-
 
     
