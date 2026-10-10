@@ -1,7 +1,7 @@
 {
-  "name": "dehla-pakad-game",
+  "name": "dehla-pakad-pro",
   "version": "1.0.0",
-  "description": "Multiplayer Dehla Pakad Card Game",
+  "description": "Callbreak Style Dehla Pakad Multiplayer Card Game",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
