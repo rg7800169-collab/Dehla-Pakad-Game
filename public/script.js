@@ -59,14 +59,18 @@ if (soundBtn) {
 }
 
 const fullscreenBtn = document.getElementById('fullscreen-btn');
-if (fullscreenBtn) fullscreenBtn.onclick = () => autoLockLandscape();
+if (fullscreenBtn) {
+    fullscreenBtn.onclick = () => {
+        autoLockLandscape();
+    };
+}
 
-// Containers
+// UI Containers
 const homeLobby = document.getElementById('home-lobby');
 const privateRoomModal = document.getElementById('private-room-modal');
 const gameArena = document.getElementById('game-arena');
 
-// Game Modes
+// Game Mode Clicks
 const btnPractice = document.getElementById('btn-mode-practice');
 const btnPrivate = document.getElementById('btn-mode-private');
 const btnOnline = document.getElementById('btn-mode-online');
@@ -74,14 +78,18 @@ const btnLocal = document.getElementById('btn-mode-local');
 const closeRoomModal = document.getElementById('close-room-modal');
 const backToHomeBtn = document.getElementById('back-to-home-btn');
 
+// 1. PRACTICE MODE (Instant 3 Bots Match)
 if (btnPractice) {
     btnPractice.onclick = () => {
         autoLockLandscape();
         socket.emit('createRoom');
-        setTimeout(() => socket.emit('requestStartGame'), 400);
+        setTimeout(() => {
+            socket.emit('requestStartGame');
+        }, 400);
     };
 }
 
+// 2. PLAY PRIVATELY (Opens Code Popup)
 if (btnPrivate) {
     btnPrivate.onclick = () => {
         autoLockLandscape();
@@ -96,16 +104,30 @@ if (closeRoomModal) {
     };
 }
 
-if (btnOnline) btnOnline.onclick = () => { autoLockLandscape(); btnPractice.click(); };
-if (btnLocal) btnLocal.onclick = () => { autoLockLandscape(); btnPractice.click(); };
-
-if (backToHomeBtn) {
-    backToHomeBtn.onclick = () => {
-        if (confirm("Match chhod kar Home par jana chahte hain?")) location.reload();
+// 3. PLAY ONLINE
+if (btnOnline) {
+    btnOnline.onclick = () => {
+        autoLockLandscape();
+        if (btnPractice) btnPractice.click();
+    };
+}
+if (btnLocal) {
+    btnLocal.onclick = () => {
+        autoLockLandscape();
+        if (btnPractice) btnPractice.click();
     };
 }
 
-// Room Management
+// Return to Home
+if (backToHomeBtn) {
+    backToHomeBtn.onclick = () => {
+        if (confirm("Match chhod kar Home par jana chahte hain?")) {
+            location.reload();
+        }
+    };
+}
+
+// Room Management Elements
 const roomSelectionBox = document.getElementById('room-selection-box');
 const roomWaitingBox = document.getElementById('room-waiting-box');
 const createRoomBtn = document.getElementById('create-room-btn');
@@ -115,7 +137,7 @@ const displayRoomCode = document.getElementById('display-room-code');
 const startBtn = document.getElementById('start-game-btn');
 const playerCountEl = document.getElementById('player-count');
 
-if (createRoomBtn) createRoomBtn.onclick = () => socket.emit('createRoom');
+if (createRoomBtn) createRoomBtn.onclick = () => { socket.emit('createRoom'); };
 if (joinRoomBtn) {
     joinRoomBtn.onclick = () => {
         const code = roomInput.value.trim();
@@ -123,7 +145,7 @@ if (joinRoomBtn) {
         socket.emit('joinRoom', code);
     };
 }
-if (startBtn) startBtn.onclick = () => socket.emit('requestStartGame');
+if (startBtn) startBtn.onclick = () => { socket.emit('requestStartGame'); };
 
 socket.on('roomCreated', (data) => {
     currentRoomId = data.roomId;
@@ -161,59 +183,55 @@ socket.on('gameStarted', () => {
     autoLockLandscape();
 });
 
-// Batch Deal Notice
-socket.on('dealBatchAnimation', (data) => {
-    playSound('cardPlay');
-    const turnBadge = document.getElementById('turn-badge');
-    if (turnBadge) {
-        turnBadge.innerText = `Phase ${data.phase}: ${data.count} Patti Baati Gayi!`;
-    }
-});
-
-// Pool Collected Notice (2 Consecutive Tricks)
-socket.on('poolCollected', (data) => {
-    playSound('cardPlay');
-    const playerNames = ['You', 'Bot 1', 'Bot 3', 'Bot 2'];
-    const winnerName = playerNames[data.winner] || `Player ${data.winner + 1}`;
-    const turnBadge = document.getElementById('turn-badge');
-    if (turnBadge) {
-        turnBadge.innerText = `${winnerName} ne lagatar do haath jeetkar ${data.totalCards} patti uthayi!`;
-        turnBadge.className = "pill-badge text-[11px] font-black px-4 py-0.5 shadow-lg bg-amber-400 text-stone-950 animate-bounce";
-    }
-});
-
 // Card Graphics Generator
 function getCourtSVG(rank, isRed) {
     const robeColor = isRed ? '#dc2626' : '#1e3a8a';
     const accentColor = isRed ? '#f87171' : '#3b82f6';
     if (rank === 'K') {
         return `
-        <svg class="court-svg" viewBox="0 0 60 90" fill="none">
+        <svg class="court-svg" viewBox="0 0 60 90" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect width="60" height="90" fill="#fffbeb"/>
             <path d="M10 90 L10 50 L20 40 L40 40 L50 50 L50 90 Z" fill="${robeColor}"/>
             <path d="M22 40 L30 55 L38 40 L30 45 Z" fill="#f59e0b"/>
             <path d="M12 55 L30 90 L48 55 Z" fill="${accentColor}" opacity="0.6"/>
             <path d="M18 24 L22 14 L30 20 L38 14 L42 24 Z" fill="#d97706" stroke="#b45309" stroke-width="1.5"/>
-            <circle cx="22" cy="14" r="2" fill="#ef4444"/><circle cx="30" cy="20" r="2.5" fill="#3b82f6"/><circle cx="38" cy="14" r="2" fill="#ef4444"/>
-            <circle cx="30" cy="30" r="10" fill="#fde68a"/><path d="M22 32 Q30 44 38 32 Q30 36 22 32" fill="#78350f"/>
-            <circle cx="27" cy="28" r="1.5" fill="#1e293b"/><circle cx="33" cy="28" r="1.5" fill="#1e293b"/>
+            <circle cx="22" cy="14" r="2" fill="#ef4444"/>
+            <circle cx="30" cy="20" r="2.5" fill="#3b82f6"/>
+            <circle cx="38" cy="14" r="2" fill="#ef4444"/>
+            <circle cx="30" cy="30" r="10" fill="#fde68a"/>
+            <path d="M22 32 Q30 44 38 32 Q30 36 22 32" fill="#78350f"/>
+            <circle cx="27" cy="28" r="1.5" fill="#1e293b"/>
+            <circle cx="33" cy="28" r="1.5" fill="#1e293b"/>
+            <line x1="46" y1="36" x2="46" y2="82" stroke="#d97706" stroke-width="2.5"/>
+            <circle cx="46" cy="34" r="3.5" fill="#f59e0b"/>
         </svg>`;
     } else if (rank === 'Q') {
         return `
-        <svg class="court-svg" viewBox="0 0 60 90" fill="none">
+        <svg class="court-svg" viewBox="0 0 60 90" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect width="60" height="90" fill="#fffbeb"/>
             <path d="M12 90 L12 48 L22 42 L38 42 L48 48 L48 90 Z" fill="${robeColor}"/>
             <path d="M24 42 L30 52 L36 42 Z" fill="#f59e0b"/>
             <path d="M18 28 Q16 48 24 50 Q36 50 42 48 Q44 28 30 24 Z" fill="#92400e"/>
-            <circle cx="30" cy="32" r="9" fill="#fde68a"/><circle cx="27" cy="30" r="1.2" fill="#1e293b"/><circle cx="33" cy="30" r="1.2" fill="#1e293b"/>
+            <circle cx="30" cy="32" r="9" fill="#fde68a"/>
+            <circle cx="27" cy="30" r="1.2" fill="#1e293b"/>
+            <circle cx="33" cy="30" r="1.2" fill="#1e293b"/>
+            <path d="M28 36 Q30 38 32 36" stroke="#b91c1c" stroke-width="1.2" fill="none"/>
+            <path d="M20 22 L24 15 L30 19 L36 15 L40 22 Z" fill="#d97706" stroke="#b45309" stroke-width="1.2"/>
+            <circle cx="30" cy="19" r="2" fill="#10b981"/>
+            <circle cx="44" cy="62" r="4" fill="#ec4899"/>
         </svg>`;
     } else if (rank === 'J') {
         return `
-        <svg class="court-svg" viewBox="0 0 60 90" fill="none">
+        <svg class="court-svg" viewBox="0 0 60 90" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect width="60" height="90" fill="#fffbeb"/>
             <path d="M12 90 L12 48 L22 38 L38 38 L48 48 L48 90 Z" fill="${robeColor}"/>
+            <path d="M22 48 L30 60 L38 48 Z" fill="#cbd5e1" stroke="#64748b"/>
             <circle cx="30" cy="28" r="9" fill="#fde68a"/>
-            <circle cx="27" cy="27" r="1.3" fill="#1e293b"/><circle cx="33" cy="27" r="1.3" fill="#1e293b"/>
+            <path d="M19 24 Q30 12 41 24 L41 20 Q30 10 19 20 Z" fill="#d97706"/>
+            <circle cx="27" cy="27" r="1.3" fill="#1e293b"/>
+            <circle cx="33" cy="27" r="1.3" fill="#1e293b"/>
+            <line x1="45" y1="20" x2="45" y2="85" stroke="#64748b" stroke-width="2.5"/>
+            <path d="M41 24 L45 14 L49 24 Z" fill="#94a3b8"/>
         </svg>`;
     }
     return '';
@@ -227,14 +245,21 @@ function renderCardContent(rank, suit, isRed) {
     }
 }
 
-// Elements
+// Table Elements
 const roundNum = document.getElementById('round-num');
 const turnBadge = document.getElementById('turn-badge');
 const handContainer = document.getElementById('hand-container');
 const scatteredPoolDiv = document.getElementById('scattered-pool');
 const activeTrickDiv = document.getElementById('active-trick');
+const poolCountEl = document.getElementById('pool-count');
 const hukumDisplay = document.getElementById('hukum-display');
 
+const names = {
+    top: document.getElementById('name-top'),
+    left: document.getElementById('name-left'),
+    right: document.getElementById('name-right'),
+    bottom: document.getElementById('name-bottom')
+};
 const scores = {
     top: document.getElementById('score-top'),
     left: document.getElementById('score-left'),
@@ -248,7 +273,7 @@ const rings = {
     bottom: document.getElementById('ring-bottom')
 };
 
-// Hand Rendering
+// User Hand Rendering
 socket.on('updateHand', (cards) => {
     if (!handContainer) return;
     handContainer.innerHTML = '';
@@ -265,7 +290,6 @@ socket.on('updateHand', (cards) => {
         const isRed = (card.suit === '♥' || card.suit === '♦');
         el.className = `card-face hand-card ${isRed ? 'red' : 'black'}`;
         el.style.zIndex = index + 1;
-        el.style.animation = `dealSlideIn 0.25s ease-out ${index * 0.04}s both`;
 
         el.innerHTML = `
             <div class="card-corner">
@@ -276,7 +300,9 @@ socket.on('updateHand', (cards) => {
         `;
 
         el.onclick = () => {
-            if (isMyTurn) socket.emit('playCard', { suit: card.suit, rank: card.rank });
+            if (isMyTurn) {
+                socket.emit('playCard', { suit: card.suit, rank: card.rank });
+            }
         };
         handContainer.appendChild(el);
     });
@@ -287,6 +313,11 @@ socket.on('gameState', (state) => {
     if (state.eventType) playSound(state.eventType);
 
     if (roundNum) roundNum.innerText = state.trickCount || 1;
+    
+    // Pool Count update with null-safety
+    if (poolCountEl && state.centerPool) {
+        poolCountEl.innerText = state.centerPool.length;
+    }
 
     if (hukumDisplay) {
         if (state.hukumRevealed) {
@@ -307,7 +338,7 @@ socket.on('gameState', (state) => {
     const activePlayer = state.currentTurn;
     isMyTurn = (activePlayer + 1) === myPlayerNumber;
 
-    if (turnBadge && !turnBadge.innerText.includes('uthayi')) {
+    if (turnBadge) {
         if (isMyTurn) {
             turnBadge.innerText = "Your Turn";
             turnBadge.className = "pill-badge text-[11px] font-black px-4 py-0.5 shadow-lg bg-emerald-500 text-stone-950 animate-bounce";
@@ -324,29 +355,22 @@ socket.on('gameState', (state) => {
     else if (relActive === 2 && rings.top) rings.top.classList.add('turn-glow');
     else if (relActive === 3 && rings.left) rings.left.classList.add('turn-glow');
 
-    // Natural Scattered Pool Cards (Normal Readable Look)
+    // 1. Center Pool Cards
     if (scatteredPoolDiv) {
         scatteredPoolDiv.innerHTML = '';
-        if (state.centerPool && state.centerPool.length > 0) {
+        if (state.centerPool) {
             state.centerPool.forEach((card, idx) => {
                 const cardEl = document.createElement('div');
                 const isRed = (card.suit === '♥' || card.suit === '♦');
                 cardEl.className = `card-face pool-card-scattered ${isRed ? 'red' : 'black'}`;
-
-                // Smooth Natural Distribution Formula
-                const spreadAngle = (idx * 137.5) * (Math.PI / 180);
-                const spreadRadius = Math.min(100, 20 + idx * 7);
-                const offsetX = Math.cos(spreadAngle) * spreadRadius;
-                const offsetY = Math.sin(spreadAngle) * (spreadRadius * 0.52);
-                const rot = ((idx * 41) % 50) - 25;
-
-                cardEl.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${rot}deg)`;
-                cardEl.style.zIndex = idx + 1;
-
+                const angle = ((idx * 37) % 70) - 35;
+                const offsetX = ((idx * 15) % 36) - 18;
+                const offsetY = ((idx * 19) % 28) - 14;
+                cardEl.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${angle}deg)`;
                 cardEl.innerHTML = `
-                    <div class="card-corner" style="top: 2px; left: 3px;">
-                        <span class="corner-rank" style="font-size: 13px; font-weight: 800;">${card.rank}</span>
-                        <span class="corner-suit" style="font-size: 11px;">${card.suit}</span>
+                    <div class="card-corner">
+                        <span class="corner-rank" style="font-size:11px;">${card.rank}</span>
+                        <span class="corner-suit" style="font-size:10px;">${card.suit}</span>
                     </div>
                 `;
                 scatteredPoolDiv.appendChild(cardEl);
@@ -354,20 +378,20 @@ socket.on('gameState', (state) => {
         }
     }
 
-    // Active Trick Cards (Aligned for Top Bot)
+    // 2. Center Active Trick Cards (Aligned for Top Bot)
     if (activeTrickDiv) {
         activeTrickDiv.innerHTML = '';
         const seatTransforms = {
-            0: { x: 131, y: 100, rotate: 0 },
-            1: { x: 172, y: 56, rotate: -90 },
-            2: { x: 131, y: 12, rotate: 0 },
-            3: { x: 90, y: 56, rotate: 90 }
+            0: { x: 81, y: 86, rotate: 0 },
+            1: { x: 122, y: 46, rotate: -90 },
+            2: { x: 81, y: 10, rotate: 0 },
+            3: { x: 40, y: 46, rotate: 90 }
         };
 
         if (state.currentTrick) {
             state.currentTrick.forEach((tc) => {
                 const relPos = (tc.player - (myPlayerNumber - 1) + 4) % 4;
-                const conf = seatTransforms[relPos] || { x: 131, y: 56, rotate: 0 };
+                const conf = seatTransforms[relPos] || { x: 81, y: 46, rotate: 0 };
                 const isRed = (tc.card.suit === '♥' || tc.card.suit === '♦');
 
                 const cardEl = document.createElement('div');
@@ -389,7 +413,7 @@ socket.on('gameState', (state) => {
     }
 });
 
-socket.on('errorMsg', (msg) => alert(msg));
+socket.on('errorMsg', (msg) => { alert(msg); });
 
 socket.on('gameOverStats', (data) => {
     const modal = document.getElementById('game-over-modal');
