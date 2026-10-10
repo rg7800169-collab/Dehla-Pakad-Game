@@ -39,17 +39,27 @@ function playSound(type) {
     } catch (e) {}
 }
 
+// Automatic Screen Orientation Lock Function
+async function autoLockLandscape() {
+    try {
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+        }
+        if (screen.orientation && screen.orientation.lock) {
+            await screen.orientation.lock('landscape');
+        }
+    } catch (err) {
+        console.log("Landscape lock request bypassed:", err);
+    }
+}
+
 document.getElementById('sound-btn').onclick = () => {
     soundEnabled = !soundEnabled;
     document.getElementById('sound-btn').innerHTML = soundEnabled ? '<span>🔊</span>' : '<span>🔇</span>';
 };
 
 document.getElementById('fullscreen-btn').onclick = () => {
-    if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-        document.exitFullscreen().catch(() => {});
-    }
+    autoLockLandscape();
 };
 
 const lobby = document.getElementById('lobby');
@@ -89,13 +99,20 @@ const rings = {
     bottom: document.getElementById('ring-bottom')
 };
 
-createRoomBtn.onclick = () => { socket.emit('createRoom'); };
+createRoomBtn.onclick = () => {
+    autoLockLandscape();
+    socket.emit('createRoom');
+};
 joinRoomBtn.onclick = () => {
     const code = roomInput.value.trim();
     if (!code) return alert("Room code daalein!");
+    autoLockLandscape();
     socket.emit('joinRoom', code);
 };
-startBtn.onclick = () => { socket.emit('requestStartGame'); };
+startBtn.onclick = () => {
+    autoLockLandscape();
+    socket.emit('requestStartGame');
+};
 
 socket.on('roomCreated', (data) => {
     currentRoomId = data.roomId;
@@ -116,22 +133,87 @@ socket.on('playerCount', (count) => { playerCountEl.innerText = count; });
 socket.on('gameStarted', () => {
     lobby.style.display = 'none';
     playSound('turnAlert');
+    autoLockLandscape();
 });
 
-// Helper for Court Card Art
-function getCardCenterHTML(rank, suit) {
+// Authentic Callbreak Royal Court SVG Generator
+function getCourtSVG(rank, isRed) {
+    const robeColor = isRed ? '#dc2626' : '#1e3a8a';
+    const accentColor = isRed ? '#f87171' : '#3b82f6';
     if (rank === 'K') {
-        return `<div class="court-frame"><span class="court-icon">👑</span></div>`;
+        return `
+        <svg class="court-svg" viewBox="0 0 60 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="60" height="90" fill="#fffbeb"/>
+            <!-- Robe -->
+            <path d="M10 90 L10 50 L20 40 L40 40 L50 50 L50 90 Z" fill="${robeColor}"/>
+            <path d="M22 40 L30 55 L38 40 L30 45 Z" fill="#f59e0b"/>
+            <!-- Collar & Sash -->
+            <path d="M12 55 L30 90 L48 55 Z" fill="${accentColor}" opacity="0.6"/>
+            <!-- Crown -->
+            <path d="M18 24 L22 14 L30 20 L38 14 L42 24 Z" fill="#d97706" stroke="#b45309" stroke-width="1.5"/>
+            <circle cx="22" cy="14" r="2" fill="#ef4444"/>
+            <circle cx="30" cy="20" r="2.5" fill="#3b82f6"/>
+            <circle cx="38" cy="14" r="2" fill="#ef4444"/>
+            <!-- Face & Beard -->
+            <circle cx="30" cy="30" r="10" fill="#fde68a"/>
+            <path d="M22 32 Q30 44 38 32 Q30 36 22 32" fill="#78350f"/>
+            <circle cx="27" cy="28" r="1.5" fill="#1e293b"/>
+            <circle cx="33" cy="28" r="1.5" fill="#1e293b"/>
+            <!-- Scepter -->
+            <line x1="46" y1="36" x2="46" y2="82" stroke="#d97706" stroke-width="2.5"/>
+            <circle cx="46" cy="34" r="3.5" fill="#f59e0b"/>
+        </svg>`;
     } else if (rank === 'Q') {
-        return `<div class="court-frame"><span class="court-icon">👸</span></div>`;
+        return `
+        <svg class="court-svg" viewBox="0 0 60 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="60" height="90" fill="#fffbeb"/>
+            <!-- Robe -->
+            <path d="M12 90 L12 48 L22 42 L38 42 L48 48 L48 90 Z" fill="${robeColor}"/>
+            <path d="M24 42 L30 52 L36 42 Z" fill="#f59e0b"/>
+            <!-- Hair -->
+            <path d="M18 28 Q16 48 24 50 Q36 50 42 48 Q44 28 30 24 Z" fill="#92400e"/>
+            <!-- Face -->
+            <circle cx="30" cy="32" r="9" fill="#fde68a"/>
+            <!-- Eyes & Smile -->
+            <circle cx="27" cy="30" r="1.2" fill="#1e293b"/>
+            <circle cx="33" cy="30" r="1.2" fill="#1e293b"/>
+            <path d="M28 36 Q30 38 32 36" stroke="#b91c1c" stroke-width="1.2" fill="none"/>
+            <!-- Crown -->
+            <path d="M20 22 L24 15 L30 19 L36 15 L40 22 Z" fill="#d97706" stroke="#b45309" stroke-width="1.2"/>
+            <circle cx="30" cy="19" r="2" fill="#10b981"/>
+            <!-- Flower -->
+            <circle cx="44" cy="62" r="4" fill="#ec4899"/>
+        </svg>`;
     } else if (rank === 'J') {
-        return `<div class="court-frame"><span class="court-icon">🛡️</span></div>`;
+        return `
+        <svg class="court-svg" viewBox="0 0 60 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="60" height="90" fill="#fffbeb"/>
+            <!-- Armor -->
+            <path d="M12 90 L12 48 L22 38 L38 38 L48 48 L48 90 Z" fill="${robeColor}"/>
+            <path d="M22 48 L30 60 L38 48 Z" fill="#cbd5e1" stroke="#64748b"/>
+            <!-- Head & Helmet -->
+            <circle cx="30" cy="28" r="9" fill="#fde68a"/>
+            <path d="M19 24 Q30 12 41 24 L41 20 Q30 10 19 20 Z" fill="#d97706"/>
+            <!-- Eyes -->
+            <circle cx="27" cy="27" r="1.3" fill="#1e293b"/>
+            <circle cx="33" cy="27" r="1.3" fill="#1e293b"/>
+            <!-- Halberd Pole -->
+            <line x1="45" y1="20" x2="45" y2="85" stroke="#64748b" stroke-width="2.5"/>
+            <path d="M41 24 L45 14 L49 24 Z" fill="#94a3b8"/>
+        </svg>`;
+    }
+    return '';
+}
+
+function renderCardContent(rank, suit, isRed) {
+    if (rank === 'K' || rank === 'Q' || rank === 'J') {
+        return `<div class="court-card-body">${getCourtSVG(rank, isRed)}</div>`;
     } else {
-        return `<div class="card-center-suit">${suit}</div>`;
+        return `<div class="num-card-body"><span class="big-center-suit">${suit}</span></div>`;
     }
 }
 
-// User Hand Rendering (Wide Spanning Row)
+// User Hand Rendering
 socket.on('updateHand', (cards) => {
     handContainer.innerHTML = '';
     const suitOrder = { '♠': 1, '♥': 2, '♣': 3, '♦': 4 };
@@ -153,9 +235,7 @@ socket.on('updateHand', (cards) => {
                 <span class="corner-rank">${card.rank}</span>
                 <span class="corner-suit">${card.suit}</span>
             </div>
-            <div class="card-center-art">
-                ${getCardCenterHTML(card.rank, card.suit)}
-            </div>
+            ${renderCardContent(card.rank, card.suit, isRed)}
         `;
 
         el.onclick = () => {
@@ -182,25 +262,22 @@ socket.on('gameState', (state) => {
         hukumDisplay.innerText = '🔒 Band';
     }
 
-    // Scores
     scores.bottom.innerText = `${state.teams[0].dehle}/${state.teams[0].cards}`;
     scores.top.innerText = `${state.teams[0].dehle}/${state.teams[0].cards}`;
     scores.left.innerText = `${state.teams[1].dehle}/${state.teams[1].cards}`;
     scores.right.innerText = `${state.teams[1].dehle}/${state.teams[1].cards}`;
 
-    // Turn Highlights
     const activePlayer = state.currentTurn;
     isMyTurn = (activePlayer + 1) === myPlayerNumber;
 
     if (isMyTurn) {
         turnBadge.innerText = "Your Turn";
-        turnBadge.className = "pill-badge text-[11px] font-black px-4 py-0.5 mb-0.5 shadow-lg bg-emerald-500 text-stone-950 animate-bounce";
+        turnBadge.className = "pill-badge text-[11px] font-black px-4 py-0.5 shadow-lg bg-emerald-500 text-stone-950 animate-bounce";
     } else {
         turnBadge.innerText = `Waiting for P${activePlayer + 1}...`;
-        turnBadge.className = "pill-badge text-[11px] font-bold px-4 py-0.5 mb-0.5 shadow-md bg-black/80 text-stone-400";
+        turnBadge.className = "pill-badge text-[11px] font-bold px-4 py-0.5 shadow-md bg-black/80 text-stone-400";
     }
 
-    // Avatar glow
     Object.values(rings).forEach(r => r.classList.remove('turn-glow'));
     const relActive = (activePlayer - (myPlayerNumber - 1) + 4) % 4;
     if (relActive === 0) rings.bottom.classList.add('turn-glow');
@@ -208,34 +285,37 @@ socket.on('gameState', (state) => {
     else if (relActive === 2) rings.top.classList.add('turn-glow');
     else if (relActive === 3) rings.left.classList.add('turn-glow');
 
-    // 1. Center Pool (Gojh)
+    // 1. Center Pool (Gojh Cards)
     scatteredPoolDiv.innerHTML = '';
     state.centerPool.forEach((card, idx) => {
         const cardEl = document.createElement('div');
         const isRed = (card.suit === '♥' || card.suit === '♦');
         cardEl.className = `card-face pool-card-scattered ${isRed ? 'red' : 'black'}`;
         const angle = ((idx * 37) % 70) - 35;
-        const offsetX = ((idx * 15) % 40) - 20;
-        const offsetY = ((idx * 19) % 30) - 15;
+        const offsetX = ((idx * 15) % 36) - 18;
+        const offsetY = ((idx * 19) % 28) - 14;
         cardEl.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${angle}deg)`;
         cardEl.innerHTML = `
-            <div class="text-[9px] font-bold leading-none p-1">${card.rank}${card.suit}</div>
+            <div class="card-corner">
+                <span class="corner-rank" style="font-size:11px;">${card.rank}</span>
+                <span class="corner-suit" style="font-size:10px;">${card.suit}</span>
+            </div>
         `;
         scatteredPoolDiv.appendChild(cardEl);
     });
 
-    // 2. Center Active Trick Cards (Controlled offsets: Never reaching Bot 3)
+    // 2. Center Active Trick Cards (Never reaches Bot 3)
     activeTrickDiv.innerHTML = '';
-    const seatOffsets = {
-        0: { x: 44, y: 55, rotate: 0 },       // Bottom (You) - Facing vertical down
-        1: { x: 75, y: 30, rotate: -90 },     // Right Bot - Rotated horizontal
-        2: { x: 44, y: 0, rotate: 0 },        // Top Bot - Safely near center, far from Bot 3
-        3: { x: 12, y: 30, rotate: 90 }       // Left Bot - Rotated horizontal
+    const seatTransforms = {
+        0: { x: 81, y: 86, rotate: 0 },       // Bottom (You)
+        1: { x: 122, y: 46, rotate: -90 },    // Right Bot
+        2: { x: 81, y: 6, rotate: 0 },        // Top Bot (Safely pinned in center)
+        3: { x: 40, y: 46, rotate: 90 }       // Left Bot
     };
 
     state.currentTrick.forEach((tc) => {
         const relPos = (tc.player - (myPlayerNumber - 1) + 4) % 4;
-        const conf = seatOffsets[relPos] || { x: 44, y: 30, rotate: 0 };
+        const conf = seatTransforms[relPos] || { x: 81, y: 46, rotate: 0 };
         const isRed = (tc.card.suit === '♥' || tc.card.suit === '♦');
 
         const cardEl = document.createElement('div');
@@ -246,12 +326,10 @@ socket.on('gameState', (state) => {
 
         cardEl.innerHTML = `
             <div class="card-corner">
-                <span class="corner-rank">${tc.card.rank}</span>
-                <span class="corner-suit">${tc.card.suit}</span>
+                <span class="corner-rank" style="font-size:14px;">${tc.card.rank}</span>
+                <span class="corner-suit" style="font-size:11px;">${tc.card.suit}</span>
             </div>
-            <div class="card-center-art">
-                ${getCardCenterHTML(tc.card.rank, tc.card.suit)}
-            </div>
+            ${renderCardContent(tc.card.rank, tc.card.suit, isRed)}
         `;
         activeTrickDiv.appendChild(cardEl);
     });
