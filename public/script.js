@@ -1,5 +1,6 @@
 const socket = io();
 
+let currentRoomId = null;
 let myPlayerNumber = 1;
 let isMyTurn = false;
 let soundEnabled = true;
@@ -69,9 +70,16 @@ document.getElementById('fullscreen-btn').onclick = () => {
 };
 
 const lobby = document.getElementById('lobby');
+const roomSelectionBox = document.getElementById('room-selection-box');
+const roomWaitingBox = document.getElementById('room-waiting-box');
+const createRoomBtn = document.getElementById('create-room-btn');
+const joinRoomBtn = document.getElementById('join-room-btn');
+const roomInput = document.getElementById('room-input');
+const displayRoomCode = document.getElementById('display-room-code');
+const activeRoomTag = document.getElementById('active-room-tag');
 const startBtn = document.getElementById('start-game-btn');
 const playerCountEl = document.getElementById('player-count');
-const myPlayerBadge = document.getElementById('my-player-badge');
+
 const statusPill = document.getElementById('status-pill');
 const turnBadge = document.getElementById('turn-badge');
 const handContainer = document.getElementById('hand-container');
@@ -101,13 +109,48 @@ const icons = {
     right: document.getElementById('icon-right')
 };
 
+// 1. Create Room Click
+createRoomBtn.onclick = () => {
+    socket.emit('createRoom');
+};
+
+// 2. Join Room Click
+joinRoomBtn.onclick = () => {
+    const code = roomInput.value.trim();
+    if (!code) {
+        alert("Kripya 4-digit room code daalein!");
+        return;
+    }
+    socket.emit('joinRoom', code);
+};
+
+// Start Game Click
 startBtn.onclick = () => {
     socket.emit('requestStartGame');
 };
 
+socket.on('roomCreated', (data) => {
+    currentRoomId = data.roomId;
+    myPlayerNumber = data.playerNumber;
+    displayRoomCode.innerText = data.roomId;
+    activeRoomTag.innerText = data.roomId;
+
+    roomSelectionBox.classList.add('hidden');
+    roomWaitingBox.classList.remove('hidden');
+});
+
+socket.on('roomJoined', (data) => {
+    currentRoomId = data.roomId;
+    myPlayerNumber = data.playerNumber;
+    displayRoomCode.innerText = data.roomId;
+    activeRoomTag.innerText = data.roomId;
+
+    roomSelectionBox.classList.add('hidden');
+    roomWaitingBox.classList.remove('hidden');
+});
+
 socket.on('playerAssigned', (num) => {
     myPlayerNumber = Number(num);
-    myPlayerBadge.innerText = `Aapka Number: Player ${num}`;
 });
 
 socket.on('playerCount', (count) => {
@@ -124,9 +167,9 @@ function updateSeatLabels(isBotArray) {
     const me = (myPlayerNumber || 1) - 1;
 
     const relP = [
-        (me + 1) % 4,
-        (me + 2) % 4,
-        (me + 3) % 4
+        (me + 1) % 4, // Right
+        (me + 2) % 4, // Top (Partner)
+        (me + 3) % 4  // Left
     ];
 
     names.right.innerText = isBotArray[relP[0]] ? `Bot ${relP[0] + 1}` : `Player ${relP[0] + 1}`;
@@ -220,7 +263,7 @@ socket.on('gameState', (state) => {
 
     if (state.message) statusPill.innerText = state.message;
 
-    // Center Pool Rendering
+    // Scattered Pool Rendering
     scatteredPoolDiv.innerHTML = '';
     state.centerPool.forEach((card, idx) => {
         const cardEl = document.createElement('div');
@@ -300,8 +343,6 @@ socket.on('gameOverStats', (data) => {
 
     modal.classList.add('show-modal');
 });
-
-socket.on('roomFull', (msg) => { alert(msg); });
 
 
     
