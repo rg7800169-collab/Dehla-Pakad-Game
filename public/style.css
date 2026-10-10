@@ -9,7 +9,7 @@ html, body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* 1. WOODEN TABLE BACKGROUND */
+/* Wooden Table Texture */
 .wooden-bg {
     background-color: #d89139;
     background-image: 
@@ -31,11 +31,7 @@ html, body {
     box-shadow: inset 0 0 100px rgba(50, 20, 0, 0.55);
 }
 
-/* ==========================================================
-   CALLBREAK HOME SCREEN STYLES (SCREENSHOT MATCH)
-   ========================================================== */
-
-/* Top Header Elements */
+/* Header & Lobby Elements */
 .wood-square-btn {
     width: 38px;
     height: 38px;
@@ -71,7 +67,6 @@ html, body {
     box-shadow: 0 3px 6px rgba(0,0,0,0.4);
 }
 
-/* 2x2 Big Wooden Game Mode Cards */
 .mode-card {
     height: 100px;
     background: linear-gradient(145deg, #be6e3a, #844116);
@@ -90,67 +85,27 @@ html, body {
     box-shadow: 0 10px 20px rgba(0,0,0,0.65);
 }
 
-.mode-icon-box {
-    margin-bottom: 2px;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-}
-.mode-title {
-    font-size: 14px;
-    font-weight: 900;
-    color: #ffffff;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-    line-height: 1.1;
-}
-.mode-count {
-    font-size: 10px;
-    font-weight: 800;
-    color: #fde68a;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-}
+.mode-icon-box { margin-bottom: 2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
+.mode-title { font-size: 14px; font-weight: 900; color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.8); line-height: 1.1; }
+.mode-count { font-size: 10px; font-weight: 800; color: #fde68a; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
 .mode-info-btn {
-    position: absolute;
-    bottom: 6px;
-    right: 8px;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.2);
-    color: #fef08a;
-    font-size: 9px;
-    font-weight: 900;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-style: italic;
+    position: absolute; bottom: 6px; right: 8px; width: 14px; height: 14px;
+    border-radius: 50%; background: rgba(255,255,255,0.2); color: #fef08a;
+    font-size: 9px; font-weight: 900; display: flex; align-items: center; justify-content: center; font-style: italic;
 }
 
-/* Bottom Action Elements */
 .claim-gift-box {
     background: linear-gradient(145deg, #a855f7, #6b21a8);
     border: 2px solid #581c87;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-    animation: pulseGift 2s infinite alternate ease-in-out;
-}
-@keyframes pulseGift {
-    0% { transform: scale(1); }
-    100% { transform: scale(1.04); }
 }
 
 .noti-badge {
-    position: absolute;
-    top: -3px;
-    right: -3px;
-    width: 8px;
-    height: 8px;
-    background-color: #ef4444;
-    border-radius: 50%;
-    border: 1.5px solid #ffffff;
+    position: absolute; top: -3px; right: -3px; width: 8px; height: 8px;
+    background-color: #ef4444; border-radius: 50%; border: 1.5px solid #ffffff;
 }
 
-/* ==========================================================
-   GAME TABLE & CARDS
-   ========================================================== */
 .wood-btn {
     background: linear-gradient(145deg, #be6e3a, #8f481c);
     border: 2px solid #57290d;
@@ -160,32 +115,26 @@ html, body {
 }
 .wood-btn:active { transform: scale(0.92); }
 
-.bot-card-fan {
-    position: absolute;
-    width: 44px;
-    height: 32px;
-    background: repeating-linear-gradient(45deg, #b91c1c, #b91c1c 3px, #991b1b 3px, #991b1b 6px);
-    border: 1.5px solid #ffffff;
-    border-radius: 4px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-    z-index: 5;
+/* BOT 3 TOP POSITION */
+#seat-top {
+    top: 2px !important;
+    transform: translate(-50%, 0);
+    z-index: 35;
 }
-.fan-top { bottom: -16px; transform: rotate(180deg); }
+
+.bot-card-fan {
+    position: absolute; width: 44px; height: 32px;
+    background: repeating-linear-gradient(45deg, #b91c1c, #b91c1c 3px, #991b1b 3px, #991b1b 6px);
+    border: 1.5px solid #ffffff; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.5); z-index: 5;
+}
+.fan-top { bottom: -12px; transform: rotate(180deg); }
 .fan-left { right: -16px; transform: rotate(90deg); }
 .fan-right { left: -16px; transform: rotate(-90deg); }
 
 .avatar-circle {
-    width: 46px;
-    height: 46px;
-    background: #ffffff;
-    border: 2.5px solid #ffffff;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.45);
-    position: relative;
-    z-index: 10;
+    width: 44px; height: 44px; background: #ffffff; border: 2.5px solid #ffffff;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.45); position: relative; z-index: 10;
 }
 .avatar-circle.turn-glow {
     border-color: #22c55e !important;
@@ -194,123 +143,79 @@ html, body {
 }
 
 .pill-badge {
-    background: rgba(18, 14, 11, 0.9);
-    color: #f1f5f9;
-    font-size: 11px;
-    font-weight: 800;
-    padding: 2px 8px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-    white-space: nowrap;
+    background: rgba(18, 14, 11, 0.9); color: #f1f5f9; font-size: 11px; font-weight: 800;
+    padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4); white-space: nowrap;
 }
 
+/* Card Visuals */
 .card-face {
-    background: #ffffff !important;
-    border-radius: 7px;
-    border: 1.5px solid #cbd5e1;
-    box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.45);
-    position: relative;
-    user-select: none;
-    box-sizing: border-box;
-    overflow: hidden;
+    background: #ffffff !important; border-radius: 7px; border: 1.5px solid #cbd5e1;
+    box-shadow: -3px 3px 8px rgba(0, 0, 0, 0.45); position: relative;
+    user-select: none; box-sizing: border-box; overflow: hidden;
 }
 .card-face.red, .card-face.red * { color: #dc2626 !important; }
 .card-face.black, .card-face.black * { color: #0f172a !important; }
 
 #hand-container {
-    position: absolute;
-    bottom: 0px;
-    left: 0;
-    right: 0;
-    height: 130px;
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    padding-bottom: 2px;
-    z-index: 35;
+    position: absolute; bottom: 0px; left: 0; right: 0; height: 130px;
+    display: flex; justify-content: center; align-items: flex-end; padding-bottom: 2px; z-index: 35;
 }
 .hand-card {
-    width: clamp(66px, 8.2vw, 82px);
-    height: clamp(104px, 13vw, 126px);
-    margin-left: clamp(-32px, -3.8vw, -24px);
-    cursor: pointer;
-    flex-shrink: 0;
+    width: clamp(66px, 8.2vw, 82px); height: clamp(104px, 13vw, 126px);
+    margin-left: clamp(-32px, -3.8vw, -24px); cursor: pointer; flex-shrink: 0;
     transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), z-index 0.16s;
     touch-action: manipulation;
 }
 .hand-card:first-child { margin-left: 0 !important; }
 .hand-card:hover, .hand-card:active {
     transform: translateY(-30px) scale(1.14) !important;
-    z-index: 99 !important;
-    box-shadow: 0 16px 28px rgba(0, 0, 0, 0.7);
+    z-index: 99 !important; box-shadow: 0 16px 28px rgba(0, 0, 0, 0.7);
     border-color: #f59e0b !important;
 }
 
 .card-corner {
-    position: absolute;
-    top: 3px;
-    left: 4px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    line-height: 1;
-    pointer-events: none;
-    z-index: 2;
+    position: absolute; top: 3px; left: 4px; display: flex; flex-direction: column;
+    align-items: center; line-height: 1; pointer-events: none; z-index: 2;
 }
 .corner-rank { font-size: 18px; font-weight: 900; letter-spacing: -1px; }
 .corner-suit { font-size: 14px; line-height: 1; margin-top: -1px; }
 
 .court-card-body {
-    position: absolute;
-    top: 4px; right: 4px; bottom: 4px; left: 24px;
-    border: 1px solid #e2e8f0;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f8fafc;
-    overflow: hidden;
-    pointer-events: none;
+    position: absolute; top: 4px; right: 4px; bottom: 4px; left: 24px;
+    border: 1px solid #e2e8f0; border-radius: 4px; display: flex; align-items: center;
+    justify-content: center; background: #f8fafc; overflow: hidden; pointer-events: none;
 }
 .court-svg { width: 100%; height: 100%; }
 
-.num-card-body {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    pointer-events: none;
-}
+.num-card-body { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
 .big-center-suit { font-size: 34px; line-height: 1; margin-left: 12px; }
 
+/* Table Arena - Sized for natural spreading */
 #center-table-arena {
-    position: absolute;
-    top: 43%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 220px; height: 180px;
-    pointer-events: none;
-    z-index: 20;
+    position: absolute; top: 46%; left: 50%; transform: translate(-50%, -50%);
+    width: 320px; height: 200px; pointer-events: none; z-index: 20;
 }
+
 .active-trick-card {
-    position: absolute;
-    width: 58px; height: 88px;
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.65);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: transform 0.2s ease;
+    position: absolute; width: 58px; height: 88px; box-shadow: 0 8px 18px rgba(0, 0, 0, 0.65);
+    display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s ease;
 }
+
+/* Scattered Pool Cards (Normal Look, Clean and Readable) */
 .pool-card-scattered {
-    position: absolute;
-    width: 44px; height: 66px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-    opacity: 0.94;
-    pointer-events: none;
+    position: absolute; width: 48px; height: 70px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4); opacity: 1; pointer-events: none;
+    background: #ffffff !important; border: 1.5px solid #cbd5e1; border-radius: 6px;
+}
+
+/* Dealing Animation */
+@keyframes dealSlideIn {
+    0% { opacity: 0; transform: translateY(60px) scale(0.7); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 #rotate-warning { display: none; }
-@media screen and (orientation: portrait) {
-    #rotate-warning { display: flex !important; }
-}
-
+@media screen and (orientation: portrait) { #rotate-warning { display: flex !important; } }
 #game-over-modal { display: none; }
 #game-over-modal.show-modal { display: flex !important; }
