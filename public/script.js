@@ -118,7 +118,20 @@ socket.on('gameStarted', () => {
     playSound('turnAlert');
 });
 
-// User Hand Rendering
+// Helper for Court Card Art
+function getCardCenterHTML(rank, suit) {
+    if (rank === 'K') {
+        return `<div class="court-frame"><span class="court-icon">👑</span></div>`;
+    } else if (rank === 'Q') {
+        return `<div class="court-frame"><span class="court-icon">👸</span></div>`;
+    } else if (rank === 'J') {
+        return `<div class="court-frame"><span class="court-icon">🛡️</span></div>`;
+    } else {
+        return `<div class="card-center-suit">${suit}</div>`;
+    }
+}
+
+// User Hand Rendering (Wide Spanning Row)
 socket.on('updateHand', (cards) => {
     handContainer.innerHTML = '';
     const suitOrder = { '♠': 1, '♥': 2, '♣': 3, '♦': 4 };
@@ -140,7 +153,9 @@ socket.on('updateHand', (cards) => {
                 <span class="corner-rank">${card.rank}</span>
                 <span class="corner-suit">${card.suit}</span>
             </div>
-            <div class="card-center-suit">${card.suit}</div>
+            <div class="card-center-art">
+                ${getCardCenterHTML(card.rank, card.suit)}
+            </div>
         `;
 
         el.onclick = () => {
@@ -162,7 +177,7 @@ socket.on('gameState', (state) => {
 
     if (state.hukumRevealed) {
         const isRed = (state.hukumSuit === '♥' || state.hukumSuit === '♦');
-        hukumDisplay.innerHTML = `<span class="${isRed ? 'text-red-500' : 'text-amber-400'} text-sm font-black">${state.hukumSuit}</span>`;
+        hukumDisplay.innerHTML = `<span class="${isRed ? 'text-red-500' : 'text-amber-400'} text-xs font-black">${state.hukumSuit}</span>`;
     } else {
         hukumDisplay.innerText = '🔒 Band';
     }
@@ -179,13 +194,13 @@ socket.on('gameState', (state) => {
 
     if (isMyTurn) {
         turnBadge.innerText = "Your Turn";
-        turnBadge.className = "pill-badge text-[11px] font-black px-4 py-1 mb-1 shadow-lg bg-emerald-500 text-stone-950 animate-bounce";
+        turnBadge.className = "pill-badge text-[11px] font-black px-4 py-0.5 mb-0.5 shadow-lg bg-emerald-500 text-stone-950 animate-bounce";
     } else {
         turnBadge.innerText = `Waiting for P${activePlayer + 1}...`;
-        turnBadge.className = "pill-badge text-[11px] font-bold px-4 py-1 mb-1 shadow-md bg-black/80 text-stone-400";
+        turnBadge.className = "pill-badge text-[11px] font-bold px-4 py-0.5 mb-0.5 shadow-md bg-black/80 text-stone-400";
     }
 
-    // Avatars glow
+    // Avatar glow
     Object.values(rings).forEach(r => r.classList.remove('turn-glow'));
     const relActive = (activePlayer - (myPlayerNumber - 1) + 4) % 4;
     if (relActive === 0) rings.bottom.classList.add('turn-glow');
@@ -209,29 +224,34 @@ socket.on('gameState', (state) => {
         scatteredPoolDiv.appendChild(cardEl);
     });
 
-    // 2. Center Trick Cards (With exact 90° Rotations like screenshot)
+    // 2. Center Active Trick Cards (Controlled offsets: Never reaching Bot 3)
     activeTrickDiv.innerHTML = '';
-    const seatTransforms = {
-        0: { x: 0, y: 35, rotate: 0 },      // Bottom (You) - Facing standard
-        1: { x: 42, y: 0, rotate: -90 },    // Right Bot - Rotated -90°
-        2: { x: 0, y: -35, rotate: 0 },     // Top Bot - Facing down
-        3: { x: -42, y: 0, rotate: 90 }     // Left Bot - Rotated 90°
+    const seatOffsets = {
+        0: { x: 44, y: 55, rotate: 0 },       // Bottom (You) - Facing vertical down
+        1: { x: 75, y: 30, rotate: -90 },     // Right Bot - Rotated horizontal
+        2: { x: 44, y: 0, rotate: 0 },        // Top Bot - Safely near center, far from Bot 3
+        3: { x: 12, y: 30, rotate: 90 }       // Left Bot - Rotated horizontal
     };
 
     state.currentTrick.forEach((tc) => {
         const relPos = (tc.player - (myPlayerNumber - 1) + 4) % 4;
-        const conf = seatTransforms[relPos] || { x: 0, y: 0, rotate: 0 };
+        const conf = seatOffsets[relPos] || { x: 44, y: 30, rotate: 0 };
         const isRed = (tc.card.suit === '♥' || tc.card.suit === '♦');
 
         const cardEl = document.createElement('div');
         cardEl.className = `card-face active-trick-card ${isRed ? 'red' : 'black'}`;
-        cardEl.style.transform = `translate(${conf.x}px, ${conf.y}px) rotate(${conf.rotate}deg)`;
+        cardEl.style.left = `${conf.x}px`;
+        cardEl.style.top = `${conf.y}px`;
+        cardEl.style.transform = `rotate(${conf.rotate}deg)`;
+
         cardEl.innerHTML = `
             <div class="card-corner">
                 <span class="corner-rank">${tc.card.rank}</span>
                 <span class="corner-suit">${tc.card.suit}</span>
             </div>
-            <div class="card-center-suit">${tc.card.suit}</div>
+            <div class="card-center-art">
+                ${getCardCenterHTML(tc.card.rank, tc.card.suit)}
+            </div>
         `;
         activeTrickDiv.appendChild(cardEl);
     });
