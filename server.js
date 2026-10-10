@@ -17,7 +17,7 @@ const SUITS = ['♠', '♥', '♣', '♦'];
 const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 const RANK_VALUES = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
 
-let players = []; // Connected sockets
+let players = [];
 let isBot = [false, false, false, false];
 let gameStarted = false;
 
@@ -56,6 +56,15 @@ function initDeck() {
     }
 }
 
+// Server-side card sorting taaki client aur server dono hamesha ekdum sync rahein
+function sortHand(hand) {
+    const suitOrder = { '♠': 1, '♥': 2, '♣': 3, '♦': 4 };
+    hand.sort((a, b) => {
+        if (a.suit === b.suit) return RANK_VALUES[b.rank] - RANK_VALUES[a.rank];
+        return suitOrder[a.suit] - suitOrder[b.suit];
+    });
+}
+
 function dealCards(count) {
     for (let i = 0; i < count; i++) {
         for (let p = 0; p < 4; p++) {
@@ -63,6 +72,9 @@ function dealCards(count) {
                 playersHands[p].push(deck.pop());
             }
         }
+    }
+    for (let p = 0; p < 4; p++) {
+        sortHand(playersHands[p]);
     }
     players.forEach((socketId, idx) => {
         io.to(socketId).emit('updateHand', playersHands[idx]);
@@ -86,7 +98,7 @@ function broadcastState(message = "", eventType = "state") {
 
 io.on('connection', (socket) => {
     if (players.length >= 4 || gameStarted) {
-        socket.emit('roomFull', 'Room full hai ya game pehle hi shuru ho chuka hai.');
+        socket.emit('roomFull', 'Room full hai ya match chal raha hai.');
         return;
     }
 
@@ -97,14 +109,24 @@ io.on('connection', (socket) => {
     socket.emit('playerAssigned', playerIndex + 1);
     io.emit('playerCount', players.length);
 
-    // Manual start button click (host or any player)
     socket.on('requestStartGame', () => {
         if (!gameStarted) {
             startGame();
         }
     });
 
-    socket.on('playCard', (cardIndex) => {
+    // Exact card object find karna taaki wrong card na chale
+    socket.on('playCard', (cardData) => {
+        let hand = playersHands[playerIndex];
+        let cardIndex = -1;
+
+        if (typeof cardData === 'object' && cardData !== null) {
+            cardIndex = hand.findIndex(c => c.suit === cardData.suit && c.rank === cardData.rank);
+        } else if (typeof cardData === 'number') {
+            cardIndex = cardData;
+        }
+
+        if (cardIndex === -1) return;
         handleCardPlay(playerIndex, cardIndex);
     });
 
@@ -112,7 +134,7 @@ io.on('connection', (socket) => {
         players = players.filter(id => id !== socket.id);
         io.emit('playerCount', players.length);
         if (players.length === 0) {
-            gameStarted = false; // Reset room agar sab chale gaye
+            gameStarted = false;
         }
     });
 });
@@ -120,13 +142,8 @@ io.on('connection', (socket) => {
 function startGame() {
     gameStarted = true;
 
-    // Jo seats khali hain unhe Bots bana dein
     for (let i = 0; i < 4; i++) {
-        if (i >= players.length) {
-            isBot[i] = true;
-        } else {
-            isBot[i] = false;
-        }
+        isBot[i] = (i >= players.length);
     }
 
     initDeck();
@@ -148,7 +165,6 @@ function startGame() {
     io.emit('gameStarted');
     broadcastState("Khel shuru! Player 1 pehli chaal chalein.", "start");
 
-    // Agar Player 1 hi Bot ho (edge case)
     if (isBot[0]) {
         setTimeout(triggerBotTurn, 1000);
     }
@@ -202,7 +218,7 @@ function handleCardPlay(playerIndex, cardIndex) {
     }
 }
 
-// Bot AI logic
+// Bot Brain
 function triggerBotTurn() {
     if (!isBot[currentTurn] || currentTrick.length >= 4) return;
 
@@ -212,25 +228,19 @@ function triggerBotTurn() {
     let chosenCardIndex = 0;
 
     if (currentTrick.length === 0) {
-        // Leading: Chalne ke liye koi bhi safe card
         chosenCardIndex = Math.floor(Math.random() * hand.length);
     } else {
-        // Must follow leadSuit if available
         let validIndices = [];
         hand.forEach((c, idx) => {
             if (c.suit === leadSuit) validIndices.push(idx);
         });
 
         if (validIndices.length > 0) {
-            // Follow suit
             chosenCardIndex = validIndices[Math.floor(Math.random() * validIndices.length)];
         } else {
-            // Cut / Hukum or discard
             if (!hukumRevealed) {
-                // Pehla card chal kar hukum reveal karega
                 chosenCardIndex = 0;
             } else {
-                // Hukum khula hai, hukum chalne ki koshish ya throw
                 let hukumIndices = [];
                 hand.forEach((c, idx) => {
                     if (c.suit === hukumSuit) hukumIndices.push(idx);
@@ -324,3 +334,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server live on port ${PORT}`);
 });
+        
