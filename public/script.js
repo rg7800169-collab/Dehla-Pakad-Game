@@ -1,3 +1,4 @@
+
 const socket = io();
 
 let myPlayerNumber = null;
@@ -53,7 +54,7 @@ function playSound(type) {
             osc.stop(now + 0.15);
         }
     } catch (e) {
-        console.log("Audio notice:", e);
+        console.log("Audio:", e);
     }
 }
 
@@ -120,9 +121,9 @@ function updateSeatLabels(isBotArray) {
     const me = myPlayerNumber - 1;
 
     const relP = [
-        (me + 1) % 4, // Right
-        (me + 2) % 4, // Top
-        (me + 3) % 4  // Left
+        (me + 1) % 4,
+        (me + 2) % 4,
+        (me + 3) % 4
     ];
 
     names.bottom.innerText = `Aap (P${myPlayerNumber})`;
@@ -137,7 +138,7 @@ function updateSeatLabels(isBotArray) {
     icons.left.innerText = isBotArray[relP[2]] ? '🤖' : `P${relP[2] + 1}`;
 }
 
-// RENDER USER HAND (Overlapping Mobile Callbreak Style)
+// RENDER HAND (Explicit Inline Color Protection)
 socket.on('updateHand', (cards) => {
     handContainer.innerHTML = '';
 
@@ -151,15 +152,18 @@ socket.on('updateHand', (cards) => {
 
     cards.forEach((card, index) => {
         const el = document.createElement('div');
+        const textColor = (card.suit === '♥' || card.suit === '♦') ? '#dc2626' : '#0f172a';
+        
         el.className = `hand-card ${card.color}`;
-        el.style.zIndex = index + 1; // Left to right overlap order
+        el.style.zIndex = index + 1;
+        el.style.color = textColor; // Direct inline color
 
         el.innerHTML = `
-            <div class="card-corner">
+            <div class="card-corner" style="color: ${textColor};">
                 <span class="corner-rank">${card.rank}</span>
                 <span class="corner-suit">${card.suit}</span>
             </div>
-            <div class="card-center-suit">${card.suit}</div>
+            <div class="card-center-suit" style="color: ${textColor};">${card.suit}</div>
         `;
 
         el.onclick = () => {
@@ -214,44 +218,49 @@ socket.on('gameState', (state) => {
 
     if (state.message) statusPill.innerText = state.message;
 
-    // 1. RENDER SCATTERED POOL (Table par padi hui purani patti)
+    // 1. RENDER POOL CARDS
     scatteredPoolDiv.innerHTML = '';
     state.centerPool.forEach((card, idx) => {
         const cardEl = document.createElement('div');
+        const textColor = (card.suit === '♥' || card.suit === '♦') ? '#dc2626' : '#0f172a';
         cardEl.className = `pool-card-scattered ${card.color}`;
+        cardEl.style.color = textColor;
+
         const angle = ((idx * 37) % 70) - 35;
         const offsetX = ((idx * 17) % 50) - 25;
         const offsetY = ((idx * 23) % 40) - 20;
 
         cardEl.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${angle}deg)`;
         cardEl.innerHTML = `
-            <div class="text-[10px] font-bold leading-none">${card.rank}</div>
-            <div class="text-sm text-center leading-none">${card.suit}</div>
-            <div class="text-[9px] text-right font-bold leading-none">${card.rank}</div>
+            <div class="text-[10px] font-bold leading-none" style="color:${textColor};">${card.rank}</div>
+            <div class="text-sm text-center leading-none" style="color:${textColor};">${card.suit}</div>
+            <div class="text-[9px] text-right font-bold leading-none" style="color:${textColor};">${card.rank}</div>
         `;
         scatteredPoolDiv.appendChild(cardEl);
     });
 
-    // 2. RENDER CURRENT TRICK CARDS (Table par abhi chali hui patti)
+    // 2. RENDER ACTIVE TRICK CARDS
     activeTrickDiv.innerHTML = '';
     const seatOffsets = {
-        0: { x: 0, y: 38 },   // Bottom
-        1: { x: 42, y: 0 },   // Right
-        2: { x: 0, y: -38 },  // Top
-        3: { x: -42, y: 0 }   // Left
+        0: { x: 0, y: 38 },
+        1: { x: 42, y: 0 },
+        2: { x: 0, y: -38 },
+        3: { x: -42, y: 0 }
     };
 
     state.currentTrick.forEach((tc) => {
         const relPos = myPlayerNumber ? (tc.player - (myPlayerNumber - 1) + 4) % 4 : tc.player;
         const pos = seatOffsets[relPos] || { x: 0, y: 0 };
+        const textColor = (tc.card.suit === '♥' || tc.card.suit === '♦') ? '#dc2626' : '#0f172a';
 
         const cardEl = document.createElement('div');
         cardEl.className = `active-trick-card ${tc.card.color}`;
+        cardEl.style.color = textColor;
         cardEl.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
         cardEl.innerHTML = `
-            <div class="text-xs font-black leading-none">${tc.card.rank}</div>
-            <div class="text-2xl text-center leading-none">${tc.card.suit}</div>
-            <div class="text-[11px] text-right font-black leading-none">${tc.card.rank}</div>
+            <div class="text-xs font-black leading-none" style="color:${textColor};">${tc.card.rank}</div>
+            <div class="text-2xl text-center leading-none" style="color:${textColor};">${tc.card.suit}</div>
+            <div class="text-[11px] text-right font-black leading-none" style="color:${textColor};">${tc.card.rank}</div>
         `;
         activeTrickDiv.appendChild(cardEl);
     });
