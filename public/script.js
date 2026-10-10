@@ -1,6 +1,7 @@
+
 const socket = io();
 
-let myPlayerNumber = null;
+let myPlayerNumber = 1;
 let isMyTurn = false;
 let soundEnabled = true;
 
@@ -52,14 +53,22 @@ function playSound(type) {
             osc.start(now);
             osc.stop(now + 0.15);
         }
-    } catch (e) {
-        console.log("Audio:", e);
-    }
+    } catch (e) {}
 }
 
+// Sound Toggle
 document.getElementById('sound-btn').onclick = () => {
     soundEnabled = !soundEnabled;
     document.getElementById('sound-btn').innerText = soundEnabled ? '🔊' : '🔇';
+};
+
+// Fullscreen Toggle
+document.getElementById('fullscreen-btn').onclick = () => {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+        document.exitFullscreen().catch(() => {});
+    }
 };
 
 const lobby = document.getElementById('lobby');
@@ -80,13 +89,11 @@ const t2Dehle = document.getElementById('t2-dehle');
 const t2Cards = document.getElementById('t2-cards');
 
 const rings = {
-    bottom: document.getElementById('ring-bottom'),
     top: document.getElementById('ring-top'),
     left: document.getElementById('ring-left'),
     right: document.getElementById('ring-right')
 };
 const names = {
-    bottom: document.getElementById('name-bottom'),
     top: document.getElementById('name-top'),
     left: document.getElementById('name-left'),
     right: document.getElementById('name-right')
@@ -102,8 +109,8 @@ startBtn.onclick = () => {
 };
 
 socket.on('playerAssigned', (num) => {
-    myPlayerNumber = num;
-    myPlayerBadge.innerText = `Aapka Number: Player ${num} (${num % 2 === 1 ? 'Team 1' : 'Team 2'})`;
+    myPlayerNumber = Number(num);
+    myPlayerBadge.innerText = `Aapka Number: Player ${num}`;
 });
 
 socket.on('playerCount', (count) => {
@@ -116,28 +123,26 @@ socket.on('gameStarted', () => {
 });
 
 function updateSeatLabels(isBotArray) {
-    if (!myPlayerNumber || !isBotArray) return;
-    const me = myPlayerNumber - 1;
+    if (!isBotArray) return;
+    const me = (myPlayerNumber || 1) - 1;
 
     const relP = [
-        (me + 1) % 4,
-        (me + 2) % 4,
-        (me + 3) % 4
+        (me + 1) % 4, // Right
+        (me + 2) % 4, // Top (Partner)
+        (me + 3) % 4  // Left
     ];
-
-    names.bottom.innerText = `Aap (P${myPlayerNumber})`;
 
     names.right.innerText = isBotArray[relP[0]] ? `Bot ${relP[0] + 1}` : `Player ${relP[0] + 1}`;
     icons.right.innerText = isBotArray[relP[0]] ? '🤖' : `P${relP[0] + 1}`;
 
-    names.top.innerText = isBotArray[relP[1]] ? `Bot Partner` : `Partner (P${relP[1] + 1})`;
+    names.top.innerText = isBotArray[relP[1]] ? `Bot ${relP[1] + 1} (Partner)` : `Partner (P${relP[1] + 1})`;
     icons.top.innerText = isBotArray[relP[1]] ? '🤖' : `P${relP[1] + 1}`;
 
     names.left.innerText = isBotArray[relP[2]] ? `Bot ${relP[2] + 1}` : `Player ${relP[2] + 1}`;
     icons.left.innerText = isBotArray[relP[2]] ? '🤖' : `P${relP[2] + 1}`;
 }
 
-// EXACT MATCHING CARD EMIT FIX
+// RENDER CALLBREAK FAN HAND
 socket.on('updateHand', (cards) => {
     handContainer.innerHTML = '';
 
@@ -153,7 +158,7 @@ socket.on('updateHand', (cards) => {
         const el = document.createElement('div');
         const textColor = (card.suit === '♥' || card.suit === '♦') ? '#dc2626' : '#0f172a';
         
-        el.className = `hand-card ${card.color}`;
+        el.className = `hand-card ${card.color} ${isMyTurn ? 'my-turn-card' : ''}`;
         el.style.zIndex = index + 1;
         el.style.color = textColor;
 
@@ -165,12 +170,16 @@ socket.on('updateHand', (cards) => {
             <div class="card-center-suit" style="color: ${textColor};">${card.suit}</div>
         `;
 
-        // FIXED: Number index ke badle exact suit aur rank emit ho rahi hai
-        el.onclick = () => {
+        const playAction = (e) => {
+            e.preventDefault();
             if (isMyTurn) {
                 socket.emit('playCard', { suit: card.suit, rank: card.rank });
             }
         };
+
+        el.onclick = playAction;
+        el.ontouchend = playAction;
+
         handContainer.appendChild(el);
     });
 });
@@ -188,7 +197,7 @@ socket.on('gameState', (state) => {
 
     if (state.hukumRevealed) {
         let color = (state.hukumSuit === '♥' || state.hukumSuit === '♦') ? 'text-red-500' : 'text-amber-400';
-        hukumDisplay.innerHTML = `<span class="${color} text-lg font-black">${state.hukumSuit}</span>`;
+        hukumDisplay.innerHTML = `<span class="${color} text-xs font-black">${state.hukumSuit}</span>`;
     } else {
         hukumDisplay.innerText = '🔒 Band';
     }
@@ -199,26 +208,28 @@ socket.on('gameState', (state) => {
     isMyTurn = (activePlayer + 1) === myPlayerNumber;
 
     if (isMyTurn) {
-        turnBadge.innerText = "Aapki Chaal!";
-        turnBadge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500 text-black animate-pulse";
+        turnBadge.innerText = "👉 AAPKI CHAAL (15s)";
+        turnBadge.className = "text-[10px] font-black px-3 py-0.5 rounded-full bg-emerald-400 text-stone-950 animate-bounce shadow-md shadow-emerald-500/50";
+        document.querySelectorAll('.hand-card').forEach(c => c.classList.add('my-turn-card'));
     } else {
         const isCurrentBot = state.isBot && state.isBot[activePlayer];
-        turnBadge.innerText = `${isCurrentBot ? 'Bot' : 'P'}${activePlayer + 1} ki baari`;
+        turnBadge.innerText = `${isCurrentBot ? 'Bot' : 'P'}${activePlayer + 1} ki baari...`;
         turnBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-800 text-stone-400";
+        document.querySelectorAll('.hand-card').forEach(c => c.classList.remove('my-turn-card'));
     }
 
+    // Active ring in landscape
     Object.values(rings).forEach(r => r.classList.remove('turn-active'));
     if (myPlayerNumber) {
         const relativeActive = (activePlayer - (myPlayerNumber - 1) + 4) % 4;
-        if (relativeActive === 0) rings.bottom.classList.add('turn-active');
-        else if (relativeActive === 1) rings.right.classList.add('turn-active');
+        if (relativeActive === 1) rings.right.classList.add('turn-active');
         else if (relativeActive === 2) rings.top.classList.add('turn-active');
         else if (relativeActive === 3) rings.left.classList.add('turn-active');
     }
 
     if (state.message) statusPill.innerText = state.message;
 
-    // Render Pool Cards
+    // 1. SCATTERED POOL
     scatteredPoolDiv.innerHTML = '';
     state.centerPool.forEach((card, idx) => {
         const cardEl = document.createElement('div');
@@ -227,25 +238,25 @@ socket.on('gameState', (state) => {
         cardEl.style.color = textColor;
 
         const angle = ((idx * 37) % 70) - 35;
-        const offsetX = ((idx * 17) % 50) - 25;
-        const offsetY = ((idx * 23) % 40) - 20;
+        const offsetX = ((idx * 15) % 40) - 20;
+        const offsetY = ((idx * 19) % 30) - 15;
 
         cardEl.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${angle}deg)`;
         cardEl.innerHTML = `
-            <div class="text-[10px] font-bold leading-none" style="color:${textColor};">${card.rank}</div>
-            <div class="text-sm text-center leading-none" style="color:${textColor};">${card.suit}</div>
-            <div class="text-[9px] text-right font-bold leading-none" style="color:${textColor};">${card.rank}</div>
+            <div class="text-[9px] font-bold leading-none" style="color:${textColor};">${card.rank}</div>
+            <div class="text-xs text-center leading-none" style="color:${textColor};">${card.suit}</div>
+            <div class="text-[8px] text-right font-bold leading-none" style="color:${textColor};">${card.rank}</div>
         `;
         scatteredPoolDiv.appendChild(cardEl);
     });
 
-    // Render Active Trick Cards
+    // 2. ACTIVE TRICK CARDS (Landscape Centered Offsets)
     activeTrickDiv.innerHTML = '';
     const seatOffsets = {
-        0: { x: 0, y: 38 },
-        1: { x: 42, y: 0 },
-        2: { x: 0, y: -38 },
-        3: { x: -42, y: 0 }
+        0: { x: 0, y: 30 },   // Bottom (You)
+        1: { x: 38, y: 0 },   // Right
+        2: { x: 0, y: -30 },  // Top
+        3: { x: -38, y: 0 }   // Left
     };
 
     state.currentTrick.forEach((tc) => {
@@ -258,9 +269,9 @@ socket.on('gameState', (state) => {
         cardEl.style.color = textColor;
         cardEl.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
         cardEl.innerHTML = `
-            <div class="text-xs font-black leading-none" style="color:${textColor};">${tc.card.rank}</div>
-            <div class="text-2xl text-center leading-none" style="color:${textColor};">${tc.card.suit}</div>
-            <div class="text-[11px] text-right font-black leading-none" style="color:${textColor};">${tc.card.rank}</div>
+            <div class="text-[10px] font-black leading-none" style="color:${textColor};">${tc.card.rank}</div>
+            <div class="text-lg text-center leading-none" style="color:${textColor};">${tc.card.suit}</div>
+            <div class="text-[9px] text-right font-black leading-none" style="color:${textColor};">${tc.card.rank}</div>
         `;
         activeTrickDiv.appendChild(cardEl);
     });
@@ -268,12 +279,38 @@ socket.on('gameState', (state) => {
 
 socket.on('errorMsg', (msg) => { alert(msg); });
 
-socket.on('gameOver', (msg) => {
-    alert(`🎉 Khel Khatam!\n\n${msg}`);
-    location.reload();
+socket.on('gameOverStats', (data) => {
+    const modal = document.getElementById('game-over-modal');
+    if (!modal) {
+        alert(`Khel Khatam: ${data.winReason}`);
+        location.reload();
+        return;
+    }
+    const kotBanner = document.getElementById('kot-banner');
+    const winnerTitle = document.getElementById('winner-title');
+    const winnerReason = document.getElementById('winner-reason');
+    const trophy = document.getElementById('trophy-icon');
+
+    if (data.isKot) {
+        kotBanner.classList.remove('hidden');
+        trophy.innerText = "👑";
+    } else {
+        kotBanner.classList.add('hidden');
+        trophy.innerText = data.winningTeam ? "🏆" : "🤝";
+    }
+
+    winnerTitle.innerText = data.winningTeam ? `${data.winningTeam} Jeeti!` : "Match Draw!";
+    winnerReason.innerText = data.winReason;
+
+    document.getElementById('final-t1-dehle').innerText = data.teams[0].dehle;
+    document.getElementById('final-t1-cards').innerText = data.teams[0].cards;
+    document.getElementById('final-t2-dehle').innerText = data.teams[1].dehle;
+    document.getElementById('final-t2-cards').innerText = data.teams[1].cards;
+
+    modal.classList.add('show-modal');
 });
 
 socket.on('roomFull', (msg) => { alert(msg); });
-
+            
 
     
