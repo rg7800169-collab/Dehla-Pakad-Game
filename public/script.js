@@ -39,7 +39,6 @@ function playSound(type) {
     } catch (e) {}
 }
 
-// Automatic Screen Orientation Lock Function
 async function autoLockLandscape() {
     try {
         if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
@@ -48,9 +47,7 @@ async function autoLockLandscape() {
         if (screen.orientation && screen.orientation.lock) {
             await screen.orientation.lock('landscape');
         }
-    } catch (err) {
-        console.log("Landscape lock request bypassed:", err);
-    }
+    } catch (err) {}
 }
 
 document.getElementById('sound-btn').onclick = () => {
@@ -62,7 +59,57 @@ document.getElementById('fullscreen-btn').onclick = () => {
     autoLockLandscape();
 };
 
-const lobby = document.getElementById('lobby');
+// UI Containers
+const homeLobby = document.getElementById('home-lobby');
+const privateRoomModal = document.getElementById('private-room-modal');
+const gameArena = document.getElementById('game-arena');
+
+// Game Mode Clicks
+const btnPractice = document.getElementById('btn-mode-practice');
+const btnPrivate = document.getElementById('btn-mode-private');
+const btnOnline = document.getElementById('btn-mode-online');
+const btnLocal = document.getElementById('btn-mode-local');
+const closeRoomModal = document.getElementById('close-room-modal');
+const backToHomeBtn = document.getElementById('back-to-home-btn');
+
+// 1. PRACTICE MODE (Instant 3 Bots Match)
+btnPractice.onclick = () => {
+    autoLockLandscape();
+    socket.emit('createRoom');
+    setTimeout(() => {
+        socket.emit('requestStartGame');
+    }, 400);
+};
+
+// 2. PLAY PRIVATELY (Opens Code Popup)
+btnPrivate.onclick = () => {
+    autoLockLandscape();
+    privateRoomModal.classList.remove('hidden');
+    privateRoomModal.classList.add('flex');
+};
+closeRoomModal.onclick = () => {
+    privateRoomModal.classList.add('hidden');
+    privateRoomModal.classList.remove('flex');
+};
+
+// 3. PLAY ONLINE
+btnOnline.onclick = () => {
+    autoLockLandscape();
+    btnPractice.click();
+};
+btnLocal.onclick = () => {
+    autoLockLandscape();
+    btnPractice.click();
+};
+
+// Return to Home
+backToHomeBtn.onclick = () => {
+    if (confirm("Match chhod kar Home par jana chahte hain?")) {
+        location.reload();
+    }
+};
+
+// Room Management Elements
 const roomSelectionBox = document.getElementById('room-selection-box');
 const roomWaitingBox = document.getElementById('room-waiting-box');
 const createRoomBtn = document.getElementById('create-room-btn');
@@ -72,6 +119,107 @@ const displayRoomCode = document.getElementById('display-room-code');
 const startBtn = document.getElementById('start-game-btn');
 const playerCountEl = document.getElementById('player-count');
 
+createRoomBtn.onclick = () => { socket.emit('createRoom'); };
+joinRoomBtn.onclick = () => {
+    const code = roomInput.value.trim();
+    if (!code) return alert("Room code daalein!");
+    socket.emit('joinRoom', code);
+};
+startBtn.onclick = () => { socket.emit('requestStartGame'); };
+
+socket.on('roomCreated', (data) => {
+    currentRoomId = data.roomId;
+    myPlayerNumber = data.playerNumber;
+    displayRoomCode.innerText = data.roomId;
+    roomSelectionBox.classList.add('hidden');
+    roomWaitingBox.classList.remove('hidden');
+    roomWaitingBox.classList.add('flex');
+});
+
+socket.on('roomJoined', (data) => {
+    currentRoomId = data.roomId;
+    myPlayerNumber = data.playerNumber;
+    displayRoomCode.innerText = data.roomId;
+    roomSelectionBox.classList.add('hidden');
+    roomWaitingBox.classList.remove('hidden');
+    roomWaitingBox.classList.add('flex');
+});
+
+socket.on('playerAssigned', (num) => { myPlayerNumber = Number(num); });
+socket.on('playerCount', (count) => { playerCountEl.innerText = count; });
+
+socket.on('gameStarted', () => {
+    homeLobby.classList.add('hidden');
+    privateRoomModal.classList.add('hidden');
+    privateRoomModal.classList.remove('flex');
+    gameArena.classList.remove('hidden');
+    playSound('turnAlert');
+    autoLockLandscape();
+});
+
+// Card Graphics Generator
+function getCourtSVG(rank, isRed) {
+    const robeColor = isRed ? '#dc2626' : '#1e3a8a';
+    const accentColor = isRed ? '#f87171' : '#3b82f6';
+    if (rank === 'K') {
+        return `
+        <svg class="court-svg" viewBox="0 0 60 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="60" height="90" fill="#fffbeb"/>
+            <path d="M10 90 L10 50 L20 40 L40 40 L50 50 L50 90 Z" fill="${robeColor}"/>
+            <path d="M22 40 L30 55 L38 40 L30 45 Z" fill="#f59e0b"/>
+            <path d="M12 55 L30 90 L48 55 Z" fill="${accentColor}" opacity="0.6"/>
+            <path d="M18 24 L22 14 L30 20 L38 14 L42 24 Z" fill="#d97706" stroke="#b45309" stroke-width="1.5"/>
+            <circle cx="22" cy="14" r="2" fill="#ef4444"/>
+            <circle cx="30" cy="20" r="2.5" fill="#3b82f6"/>
+            <circle cx="38" cy="14" r="2" fill="#ef4444"/>
+            <circle cx="30" cy="30" r="10" fill="#fde68a"/>
+            <path d="M22 32 Q30 44 38 32 Q30 36 22 32" fill="#78350f"/>
+            <circle cx="27" cy="28" r="1.5" fill="#1e293b"/>
+            <circle cx="33" cy="28" r="1.5" fill="#1e293b"/>
+            <line x1="46" y1="36" x2="46" y2="82" stroke="#d97706" stroke-width="2.5"/>
+            <circle cx="46" cy="34" r="3.5" fill="#f59e0b"/>
+        </svg>`;
+    } else if (rank === 'Q') {
+        return `
+        <svg class="court-svg" viewBox="0 0 60 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="60" height="90" fill="#fffbeb"/>
+            <path d="M12 90 L12 48 L22 42 L38 42 L48 48 L48 90 Z" fill="${robeColor}"/>
+            <path d="M24 42 L30 52 L36 42 Z" fill="#f59e0b"/>
+            <path d="M18 28 Q16 48 24 50 Q36 50 42 48 Q44 28 30 24 Z" fill="#92400e"/>
+            <circle cx="30" cy="32" r="9" fill="#fde68a"/>
+            <circle cx="27" cy="30" r="1.2" fill="#1e293b"/>
+            <circle cx="33" cy="30" r="1.2" fill="#1e293b"/>
+            <path d="M28 36 Q30 38 32 36" stroke="#b91c1c" stroke-width="1.2" fill="none"/>
+            <path d="M20 22 L24 15 L30 19 L36 15 L40 22 Z" fill="#d97706" stroke="#b45309" stroke-width="1.2"/>
+            <circle cx="30" cy="19" r="2" fill="#10b981"/>
+            <circle cx="44" cy="62" r="4" fill="#ec4899"/>
+        </svg>`;
+    } else if (rank === 'J') {
+        return `
+        <svg class="court-svg" viewBox="0 0 60 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="60" height="90" fill="#fffbeb"/>
+            <path d="M12 90 L12 48 L22 38 L38 38 L48 48 L48 90 Z" fill="${robeColor}"/>
+            <path d="M22 48 L30 60 L38 48 Z" fill="#cbd5e1" stroke="#64748b"/>
+            <circle cx="30" cy="28" r="9" fill="#fde68a"/>
+            <path d="M19 24 Q30 12 41 24 L41 20 Q30 10 19 20 Z" fill="#d97706"/>
+            <circle cx="27" cy="27" r="1.3" fill="#1e293b"/>
+            <circle cx="33" cy="27" r="1.3" fill="#1e293b"/>
+            <line x1="45" y1="20" x2="45" y2="85" stroke="#64748b" stroke-width="2.5"/>
+            <path d="M41 24 L45 14 L49 24 Z" fill="#94a3b8"/>
+        </svg>`;
+    }
+    return '';
+}
+
+function renderCardContent(rank, suit, isRed) {
+    if (rank === 'K' || rank === 'Q' || rank === 'J') {
+        return `<div class="court-card-body">${getCourtSVG(rank, isRed)}</div>`;
+    } else {
+        return `<div class="num-card-body"><span class="big-center-suit">${suit}</span></div>`;
+    }
+}
+
+// Table Elements
 const roundNum = document.getElementById('round-num');
 const turnBadge = document.getElementById('turn-badge');
 const handContainer = document.getElementById('hand-container');
@@ -98,120 +246,6 @@ const rings = {
     right: document.getElementById('ring-right'),
     bottom: document.getElementById('ring-bottom')
 };
-
-createRoomBtn.onclick = () => {
-    autoLockLandscape();
-    socket.emit('createRoom');
-};
-joinRoomBtn.onclick = () => {
-    const code = roomInput.value.trim();
-    if (!code) return alert("Room code daalein!");
-    autoLockLandscape();
-    socket.emit('joinRoom', code);
-};
-startBtn.onclick = () => {
-    autoLockLandscape();
-    socket.emit('requestStartGame');
-};
-
-socket.on('roomCreated', (data) => {
-    currentRoomId = data.roomId;
-    myPlayerNumber = data.playerNumber;
-    displayRoomCode.innerText = data.roomId;
-    roomSelectionBox.classList.add('hidden');
-    roomWaitingBox.classList.remove('hidden');
-});
-socket.on('roomJoined', (data) => {
-    currentRoomId = data.roomId;
-    myPlayerNumber = data.playerNumber;
-    displayRoomCode.innerText = data.roomId;
-    roomSelectionBox.classList.add('hidden');
-    roomWaitingBox.classList.remove('hidden');
-});
-socket.on('playerAssigned', (num) => { myPlayerNumber = Number(num); });
-socket.on('playerCount', (count) => { playerCountEl.innerText = count; });
-socket.on('gameStarted', () => {
-    lobby.style.display = 'none';
-    playSound('turnAlert');
-    autoLockLandscape();
-});
-
-// Authentic Callbreak Royal Court SVG Generator
-function getCourtSVG(rank, isRed) {
-    const robeColor = isRed ? '#dc2626' : '#1e3a8a';
-    const accentColor = isRed ? '#f87171' : '#3b82f6';
-    if (rank === 'K') {
-        return `
-        <svg class="court-svg" viewBox="0 0 60 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="60" height="90" fill="#fffbeb"/>
-            <!-- Robe -->
-            <path d="M10 90 L10 50 L20 40 L40 40 L50 50 L50 90 Z" fill="${robeColor}"/>
-            <path d="M22 40 L30 55 L38 40 L30 45 Z" fill="#f59e0b"/>
-            <!-- Collar & Sash -->
-            <path d="M12 55 L30 90 L48 55 Z" fill="${accentColor}" opacity="0.6"/>
-            <!-- Crown -->
-            <path d="M18 24 L22 14 L30 20 L38 14 L42 24 Z" fill="#d97706" stroke="#b45309" stroke-width="1.5"/>
-            <circle cx="22" cy="14" r="2" fill="#ef4444"/>
-            <circle cx="30" cy="20" r="2.5" fill="#3b82f6"/>
-            <circle cx="38" cy="14" r="2" fill="#ef4444"/>
-            <!-- Face & Beard -->
-            <circle cx="30" cy="30" r="10" fill="#fde68a"/>
-            <path d="M22 32 Q30 44 38 32 Q30 36 22 32" fill="#78350f"/>
-            <circle cx="27" cy="28" r="1.5" fill="#1e293b"/>
-            <circle cx="33" cy="28" r="1.5" fill="#1e293b"/>
-            <!-- Scepter -->
-            <line x1="46" y1="36" x2="46" y2="82" stroke="#d97706" stroke-width="2.5"/>
-            <circle cx="46" cy="34" r="3.5" fill="#f59e0b"/>
-        </svg>`;
-    } else if (rank === 'Q') {
-        return `
-        <svg class="court-svg" viewBox="0 0 60 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="60" height="90" fill="#fffbeb"/>
-            <!-- Robe -->
-            <path d="M12 90 L12 48 L22 42 L38 42 L48 48 L48 90 Z" fill="${robeColor}"/>
-            <path d="M24 42 L30 52 L36 42 Z" fill="#f59e0b"/>
-            <!-- Hair -->
-            <path d="M18 28 Q16 48 24 50 Q36 50 42 48 Q44 28 30 24 Z" fill="#92400e"/>
-            <!-- Face -->
-            <circle cx="30" cy="32" r="9" fill="#fde68a"/>
-            <!-- Eyes & Smile -->
-            <circle cx="27" cy="30" r="1.2" fill="#1e293b"/>
-            <circle cx="33" cy="30" r="1.2" fill="#1e293b"/>
-            <path d="M28 36 Q30 38 32 36" stroke="#b91c1c" stroke-width="1.2" fill="none"/>
-            <!-- Crown -->
-            <path d="M20 22 L24 15 L30 19 L36 15 L40 22 Z" fill="#d97706" stroke="#b45309" stroke-width="1.2"/>
-            <circle cx="30" cy="19" r="2" fill="#10b981"/>
-            <!-- Flower -->
-            <circle cx="44" cy="62" r="4" fill="#ec4899"/>
-        </svg>`;
-    } else if (rank === 'J') {
-        return `
-        <svg class="court-svg" viewBox="0 0 60 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="60" height="90" fill="#fffbeb"/>
-            <!-- Armor -->
-            <path d="M12 90 L12 48 L22 38 L38 38 L48 48 L48 90 Z" fill="${robeColor}"/>
-            <path d="M22 48 L30 60 L38 48 Z" fill="#cbd5e1" stroke="#64748b"/>
-            <!-- Head & Helmet -->
-            <circle cx="30" cy="28" r="9" fill="#fde68a"/>
-            <path d="M19 24 Q30 12 41 24 L41 20 Q30 10 19 20 Z" fill="#d97706"/>
-            <!-- Eyes -->
-            <circle cx="27" cy="27" r="1.3" fill="#1e293b"/>
-            <circle cx="33" cy="27" r="1.3" fill="#1e293b"/>
-            <!-- Halberd Pole -->
-            <line x1="45" y1="20" x2="45" y2="85" stroke="#64748b" stroke-width="2.5"/>
-            <path d="M41 24 L45 14 L49 24 Z" fill="#94a3b8"/>
-        </svg>`;
-    }
-    return '';
-}
-
-function renderCardContent(rank, suit, isRed) {
-    if (rank === 'K' || rank === 'Q' || rank === 'J') {
-        return `<div class="court-card-body">${getCourtSVG(rank, isRed)}</div>`;
-    } else {
-        return `<div class="num-card-body"><span class="big-center-suit">${suit}</span></div>`;
-    }
-}
 
 // User Hand Rendering
 socket.on('updateHand', (cards) => {
@@ -249,7 +283,6 @@ socket.on('updateHand', (cards) => {
 
 // Game State Update
 socket.on('gameState', (state) => {
-    lobby.style.display = 'none';
     if (state.eventType) playSound(state.eventType);
 
     roundNum.innerText = state.trickCount || 1;
@@ -307,10 +340,10 @@ socket.on('gameState', (state) => {
     // 2. Center Active Trick Cards (Never reaches Bot 3)
     activeTrickDiv.innerHTML = '';
     const seatTransforms = {
-        0: { x: 81, y: 86, rotate: 0 },       // Bottom (You)
-        1: { x: 122, y: 46, rotate: -90 },    // Right Bot
-        2: { x: 81, y: 6, rotate: 0 },        // Top Bot (Safely pinned in center)
-        3: { x: 40, y: 46, rotate: 90 }       // Left Bot
+        0: { x: 81, y: 86, rotate: 0 },
+        1: { x: 122, y: 46, rotate: -90 },
+        2: { x: 81, y: 6, rotate: 0 },
+        3: { x: 40, y: 46, rotate: 90 }
     };
 
     state.currentTrick.forEach((tc) => {
@@ -343,5 +376,4 @@ socket.on('gameOverStats', (data) => {
     document.getElementById('winner-reason').innerText = data.winReason;
     modal.classList.add('show-modal');
 });
-
     
