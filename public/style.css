@@ -1,6 +1,3 @@
-/* ==========================================================
-   CALLBREAK LANDSCAPE TABLE & SCREEN LAYOUT
-   ========================================================== */
 html, body {
     width: 100%;
     height: 100%;
@@ -10,7 +7,6 @@ html, body {
     overflow: hidden;
 }
 
-/* 1. PORTRAIT DETECTION: Phone seedha hone par overlay dikhega */
 #rotate-warning {
     display: none;
 }
@@ -29,7 +25,6 @@ html, body {
     100% { transform: rotate(0deg); }
 }
 
-/* 2. OVAL GREEN CASINO TABLE (Landscape Optimized) */
 .landscape-table {
     width: 90vw;
     max-width: 720px;
@@ -37,15 +32,12 @@ html, body {
     max-height: 250px;
     background: radial-gradient(ellipse at center, #1e5a32 0%, #0d381d 75%, #061c0d 100%);
     border-radius: 120px;
-    border: 6px solid #451a03; /* Rich Mahogany Wood Border */
+    border: 6px solid #451a03;
     box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.9), 0 8px 25px rgba(0, 0, 0, 0.8);
     outline: 2px dashed rgba(212, 175, 55, 0.3);
     outline-offset: -8px;
 }
 
-/* ==========================================================
-   CALLBREAK BOTTOM HAND (All 13 Cards Visible Fan)
-   ========================================================== */
 #hand-container {
     height: 76px;
     max-width: 96vw;
@@ -63,7 +55,7 @@ html, body {
     border-radius: 5px;
     border: 1px solid #94a3b8;
     box-shadow: -2px 0 6px rgba(0, 0, 0, 0.6);
-    margin-left: -20px; /* Real Callbreak overlapping spread */
+    margin-left: -20px;
     position: relative;
     cursor: pointer;
     flex-shrink: 0;
@@ -76,7 +68,6 @@ html, body {
     margin-left: 0 !important;
 }
 
-/* User Card Lift & Pop on Touch */
 .hand-card:hover, .hand-card:active {
     transform: translateY(-20px) scale(1.15) !important;
     z-index: 99 !important;
@@ -93,19 +84,15 @@ html, body {
     100% { transform: translateY(-6px); }
 }
 
-/* ==========================================================
-   CRISP TEXT COLORS (No Blank White)
-   ========================================================== */
 .hand-card.red, .active-trick-card.red, .pool-card-scattered.red,
 .hand-card.red *, .active-trick-card.red *, .pool-card-scattered.red * {
-    color: #dc2626 !important; /* Bold Red */
+    color: #dc2626 !important;
 }
 .hand-card.black, .active-trick-card.black, .pool-card-scattered.black,
 .hand-card.black *, .active-trick-card.black *, .pool-card-scattered.black * {
-    color: #0f172a !important; /* Deep Jet Black */
+    color: #0f172a !important;
 }
 
-/* Top-Left Corner Index */
 .card-corner {
     position: absolute;
     top: 2px;
@@ -125,7 +112,6 @@ html, body {
     line-height: 1;
 }
 
-/* Center Bada Suit */
 .card-center-suit {
     position: absolute;
     top: 52%;
@@ -136,9 +122,6 @@ html, body {
     pointer-events: none;
 }
 
-/* ==========================================================
-   TABLE CARDS (Active Trick & Gojh Pool)
-   ========================================================== */
 .active-trick-card {
     position: absolute;
     width: 44px;
@@ -172,7 +155,6 @@ html, body {
     pointer-events: none;
 }
 
-/* Seats & Avatars */
 .player-seat { z-index: 15; }
 .avatar-ring {
     width: 32px;
@@ -200,7 +182,6 @@ html, body {
     font-weight: 700;
 }
 
-/* Modal */
 #game-over-modal { display: none; }
 #game-over-modal.show-modal { display: flex !important; }
 .modal-card { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
