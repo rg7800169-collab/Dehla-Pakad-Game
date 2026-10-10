@@ -109,7 +109,7 @@ io.on('connection', (socket) => {
             currentTrick: [],
             centerPool: [],
             trickCount: 1,
-            lastWinningPlayer: null, // Same player 2 tricks track karne ke liye
+            lastWinningPlayer: null, // Same player consecutive check
             turnTimer: null
         };
 
@@ -299,7 +299,7 @@ function handleCardPlay(roomId, playerIndex, cardIndex) {
         hand.splice(cardIndex, 1);
         room.currentTrick.push({ player: playerIndex, card });
 
-        // Hukum reveal hone par turant patti NAHI bategi
+        // Hukum kholna
         if (!hasLeadSuit && !room.hukumRevealed) {
             room.hukumSuit = card.suit;
             room.hukumRevealed = true;
@@ -360,10 +360,13 @@ function resolveTrick(roomId) {
     // DEHLA PAKAD NIYAM: SAME PLAYER 2 TRICKS RULE
     // ========================================================
     const isSamePlayerTwice = (room.lastWinningPlayer !== null && room.lastWinningPlayer === winnerPlayer);
+    const isPartnerTrick = (room.lastWinningPlayer !== null && 
+                            room.lastWinningPlayer !== winnerPlayer && 
+                            (room.lastWinningPlayer % 2 === winningTeamIndex));
     const isLastTrick = (room.trickCount === 13);
 
     let handCollected = false;
-    let turnStatusMsg = `Player ${winnerPlayer + 1} (${room.isBot[winnerPlayer] ? 'Bot' : 'Player'}) ne trick jeeti!`;
+    let turnStatusMsg = "";
 
     if (isSamePlayerTwice || isLastTrick) {
         // Patti uthayi gayi!
@@ -371,12 +374,24 @@ function resolveTrick(roomId) {
         room.teams[winningTeamIndex].cards += room.centerPool.length;
         room.teams[winningTeamIndex].dehle += dehleCount;
 
-        turnStatusMsg = `${room.teams[winningTeamIndex].name} ne pool utha liya (${room.centerPool.length} Cards, ${dehleCount} Dehle)!`;
+        if (isLastTrick && !isSamePlayerTwice) {
+            turnStatusMsg = `Aakhiri trick Player ${winnerPlayer + 1} ne jeeti! ${room.teams[winningTeamIndex].name} ne pool uthaya (${room.centerPool.length} Cards)!`;
+        } else {
+            turnStatusMsg = `Player ${winnerPlayer + 1} ne lagataar 2 tricks banayi! ${room.teams[winningTeamIndex].name} ne pool uthaya (${room.centerPool.length} Cards, ${dehleCount} Dehle)!`;
+        }
+
         room.centerPool = [];
         room.lastWinningPlayer = null; // Reset
         handCollected = true;
     } else {
-        // Patti nahi uthegi (Partner jeete toh bhi table par rahegi)
+        // Patti NAHI uthegi (Dost/Partner ya Opponent ne jeeta)
+        if (isPartnerTrick) {
+            turnStatusMsg = `Player ${winnerPlayer + 1} ne trick jeeti! (Partner ki jeet par patti nahi uthegi, table par ${room.centerPool.length} cards hain)`;
+        } else {
+            turnStatusMsg = `Player ${winnerPlayer + 1} (${room.isBot[winnerPlayer] ? 'Bot' : 'Player'}) ne trick jeeti! Patti table par hai (${room.centerPool.length} Cards).`;
+        }
+        
+        // Ab is player ki streak shuru hogi
         room.lastWinningPlayer = winnerPlayer;
     }
 
@@ -388,11 +403,9 @@ function resolveTrick(roomId) {
     // BATCH-WISE CARD DEALING (5, 4, 4)
     // ========================================================
     if (room.trickCount === 5) {
-        // 5 chaal poori hone par agla 4 patti ka batch baantein
         dealCards(room, 4);
         turnStatusMsg += " | Agli 4-4 patti baanti gayi!";
     } else if (room.trickCount === 9) {
-        // 9 chaal poori hone par aakhiri 4 patti ka batch baantein
         dealCards(room, 4);
         turnStatusMsg += " | Aakhiri 4-4 patti baanti gayi!";
     }
@@ -452,4 +465,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server live on port ${PORT}`);
 });
-     
+                                             
