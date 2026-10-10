@@ -7,94 +7,105 @@
 }
 
 /* ==========================================================
-   FIX 1: UNIVERSAL CARD COLOR & VISIBILITY (No More Blank White)
+   FIX: HAR PATTI KA BACKGROUND WHITE & TEXT STRICTLY BLACK/RED
    ========================================================== */
-.card, .active-trick-card, .pool-card-scattered {
+.hand-card, .active-trick-card, .pool-card-scattered {
     background-color: #ffffff !important;
     user-select: none;
+    box-sizing: border-box;
 }
 
-/* Red Suits (Hearts & Diamonds) */
-.card.red, .active-trick-card.red, .pool-card-scattered.red,
-.card.red *, .active-trick-card.red *, .pool-card-scattered.red * {
-    color: #dc2626 !important; /* Crisp Deep Red */
+/* Red Cards */
+.hand-card.red, .active-trick-card.red, .pool-card-scattered.red,
+.hand-card.red *, .active-trick-card.red *, .pool-card-scattered.red * {
+    color: #dc2626 !important; /* Bold Red */
 }
 
-/* Black Suits (Spades & Clubs) */
-.card.black, .active-trick-card.black, .pool-card-scattered.black,
-.card.black *, .active-trick-card.black *, .pool-card-scattered.black * {
-    color: #0f172a !important; /* Crisp Jet Black */
+/* Black Cards */
+.hand-card.black, .active-trick-card.black, .pool-card-scattered.black,
+.hand-card.black *, .active-trick-card.black *, .pool-card-scattered.black * {
+    color: #0f172a !important; /* Deep Jet Black */
 }
 
 /* ==========================================================
-   FIX 2: MOBILE CALLBREAK OVERLAPPING HAND (Saari Patti Ek Saath)
+   AAPKI PATTI (BADA SIZE & SMOOTH MOBILE VIEW)
    ========================================================== */
 #hand-container {
-    padding-top: 25px; /* Cards lift hone ke liye space */
+    padding-top: 30px;
+    padding-bottom: 6px;
+    padding-left: 8px;
+    padding-right: 25px;
+    display: flex;
+    align-items: flex-end;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .hand-card {
-    width: 48px;
-    height: 74px;
-    background: #ffffff !important;
-    border-radius: 6px;
+    width: 56px;            /* Bada size */
+    height: 84px;           /* Bada size */
+    border-radius: 7px;
     border: 1.5px solid #cbd5e1;
-    box-shadow: -3px 0 8px rgba(0, 0, 0, 0.45);
-    margin-left: -20px; /* Real card fan overlap */
+    box-shadow: -4px 0 10px rgba(0, 0, 0, 0.5);
+    margin-left: -22px;     /* Callbreak fan overlap */
     position: relative;
     cursor: pointer;
     flex-shrink: 0;
-    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), z-index 0.18s;
+    transition: transform 0.16s ease, z-index 0.16s ease;
 }
 
 .hand-card:first-child {
     margin-left: 0 !important;
 }
 
-/* Touch ya Hover par patti upar uthegi */
+/* Touch karne par patti upar uthegi */
 .hand-card:hover, .hand-card:active {
-    transform: translateY(-22px) scale(1.12);
-    z-index: 60 !important;
-    box-shadow: 0 14px 22px rgba(0, 0, 0, 0.7);
+    transform: translateY(-24px) scale(1.1);
+    z-index: 99 !important;
+    box-shadow: 0 16px 24px rgba(0, 0, 0, 0.75);
     border-color: #f59e0b;
 }
 
-/* Corner Index (Overlap hone ke baad bhi number aur suit dikhega) */
+/* Top-Left Corner Index */
 .card-corner {
     position: absolute;
-    top: 2px;
-    left: 3px;
+    top: 3px;
+    left: 4px;
     display: flex;
     flex-direction: column;
     align-items: center;
     line-height: 1;
-    font-weight: 900;
+    pointer-events: none;
 }
 .card-corner .corner-rank {
-    font-size: 13px;
+    font-size: 15px;
+    font-weight: 900;
 }
 .card-corner .corner-suit {
-    font-size: 11px;
-}
-
-.card-center-suit {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -40%);
-    font-size: 24px;
+    font-size: 13px;
     line-height: 1;
 }
 
+/* Center Bada Suit */
+.card-center-suit {
+    position: absolute;
+    top: 52%;
+    left: 55%;
+    transform: translate(-50%, -50%);
+    font-size: 26px;
+    line-height: 1;
+    pointer-events: none;
+}
+
 /* ==========================================================
-   TABLE PAR FEKI HUI PATTI (Active Trick)
+   TABLE PAR CHALI HUI PATTI (Active Trick)
    ========================================================== */
 .active-trick-card {
     position: absolute;
-    width: 52px;
-    height: 76px;
+    width: 54px;
+    height: 80px;
     border-radius: 7px;
-    border: 2px solid #fbbf24; /* Golden Highlight Border */
+    border: 2px solid #fbbf24;
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.8);
     display: flex;
     flex-direction: column;
@@ -102,17 +113,9 @@
     padding: 3px 5px;
     font-weight: 900;
     z-index: 30;
-    animation: dropIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-@keyframes dropIn {
-    from { opacity: 0; transform: scale(1.3) translateY(-20px); }
-    to { opacity: 1; }
-}
-
-/* ==========================================================
-   GOJH / POOL PAR BIKHRI HUI PATTIYAN
-   ========================================================== */
+/* Table par bikhri hui purani patti (Pool) */
 .pool-card-scattered {
     position: absolute;
     width: 44px;
@@ -129,7 +132,7 @@
     pointer-events: none;
 }
 
-/* Avatars */
+/* Player Avatars */
 .player-seat { z-index: 20; }
 .avatar-ring {
     width: 38px;
@@ -152,6 +155,7 @@
 .player-name { font-size: 10px; color: #d6d3d1; margin-top: 2px; text-shadow: 0 1px 2px black; }
 
 /* Custom Scrollbar */
-.custom-scroll::-webkit-scrollbar { height: 4px; }
-.custom-scroll::-webkit-scrollbar-thumb { background: #57534e; border-radius: 2px; }
+.custom-scroll::-webkit-scrollbar { height: 5px; }
+.custom-scroll::-webkit-scrollbar-thumb { background: #64748b; border-radius: 3px; }
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 8px); }
+
