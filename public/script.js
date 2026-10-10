@@ -1,4 +1,3 @@
-
 const socket = io();
 
 let myPlayerNumber = null;
@@ -138,7 +137,7 @@ function updateSeatLabels(isBotArray) {
     icons.left.innerText = isBotArray[relP[2]] ? '🤖' : `P${relP[2] + 1}`;
 }
 
-// RENDER HAND (Explicit Inline Color Protection)
+// EXACT MATCHING CARD EMIT FIX
 socket.on('updateHand', (cards) => {
     handContainer.innerHTML = '';
 
@@ -156,7 +155,7 @@ socket.on('updateHand', (cards) => {
         
         el.className = `hand-card ${card.color}`;
         el.style.zIndex = index + 1;
-        el.style.color = textColor; // Direct inline color
+        el.style.color = textColor;
 
         el.innerHTML = `
             <div class="card-corner" style="color: ${textColor};">
@@ -166,9 +165,10 @@ socket.on('updateHand', (cards) => {
             <div class="card-center-suit" style="color: ${textColor};">${card.suit}</div>
         `;
 
+        // FIXED: Number index ke badle exact suit aur rank emit ho rahi hai
         el.onclick = () => {
             if (isMyTurn) {
-                socket.emit('playCard', index);
+                socket.emit('playCard', { suit: card.suit, rank: card.rank });
             }
         };
         handContainer.appendChild(el);
@@ -218,7 +218,7 @@ socket.on('gameState', (state) => {
 
     if (state.message) statusPill.innerText = state.message;
 
-    // 1. RENDER POOL CARDS
+    // Render Pool Cards
     scatteredPoolDiv.innerHTML = '';
     state.centerPool.forEach((card, idx) => {
         const cardEl = document.createElement('div');
@@ -239,7 +239,7 @@ socket.on('gameState', (state) => {
         scatteredPoolDiv.appendChild(cardEl);
     });
 
-    // 2. RENDER ACTIVE TRICK CARDS
+    // Render Active Trick Cards
     activeTrickDiv.innerHTML = '';
     const seatOffsets = {
         0: { x: 0, y: 38 },
@@ -274,3 +274,6 @@ socket.on('gameOver', (msg) => {
 });
 
 socket.on('roomFull', (msg) => { alert(msg); });
+
+
+    
