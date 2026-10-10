@@ -3,146 +3,280 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dehla Pakad</title>
+    <title>Dehla Pakad Pro</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#d89139">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="wooden-bg text-white w-screen h-screen overflow-hidden select-none relative">
+<body class="wooden-bg text-white w-screen h-screen overflow-hidden select-none relative font-sans">
 
     <!-- Screen Rotation Warning -->
     <div id="rotate-warning" class="fixed inset-0 bg-stone-950/98 z-50 flex flex-col justify-center items-center text-center p-6">
         <div class="mb-4 text-6xl animate-pulse">🔄📱</div>
         <h2 class="text-2xl font-black text-amber-400 mb-2">Phone Ko Rotate Karein</h2>
-        <p class="text-sm text-stone-300 max-w-xs">Callbreak jaisa full-display game khelne ke liye mobile ko aada (Horizontal / Landscape) karein.</p>
+        <p class="text-sm text-stone-300 max-w-xs">Full Callbreak landscape interface ke liye phone ko aada (Horizontal) karein.</p>
     </div>
 
-    <!-- Lobby & Room Creation -->
-    <div id="lobby" class="fixed inset-0 bg-stone-950/95 backdrop-blur-md flex flex-col justify-center items-center z-50 p-4 text-center">
-        <div class="w-14 h-14 mb-2 rounded-2xl bg-amber-500/20 border-2 border-amber-400 flex items-center justify-center text-3xl shadow-lg">🃏</div>
-        <h1 class="text-3xl font-black text-amber-400 tracking-wide mb-3">DEHLA PAKAD</h1>
-
-        <div id="room-selection-box" class="w-72 bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-xl flex flex-col gap-3">
-            <button id="create-room-btn" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 active:scale-95 text-stone-950 font-black py-2.5 rounded-xl shadow-md text-xs uppercase tracking-wider transition">
-                ➕ Naya Room Banayein
+    <!-- ==========================================================
+         CALLBREAK MAIN MENU / HOME SCREEN LOBBY
+         ========================================================== -->
+    <div id="home-lobby" class="fixed inset-0 z-40 flex flex-col justify-between p-3 wooden-bg">
+        
+        <!-- TOP HEADER BAR -->
+        <header class="w-full flex justify-between items-center z-10">
+            <!-- Left: Friends Button -->
+            <button class="wood-square-btn flex items-center justify-center text-xl shadow-md">
+                <span>👥</span>
             </button>
+
+            <!-- Center-Right: Online & Ping Status -->
+            <div class="flex items-center gap-3">
+                <div class="online-status-pill flex items-center gap-2">
+                    <span>👥 9,122 Online</span>
+                    <span class="text-stone-500">|</span>
+                    <span class="flex items-center gap-1">📶 <span class="text-emerald-400">24ms</span></span>
+                </div>
+
+                <!-- Right: Profile & Gems Pill -->
+                <div class="profile-chip flex items-center gap-2 pr-1.5 pl-3 py-1">
+                    <div class="flex flex-col text-right leading-tight">
+                        <span class="text-[11px] font-black text-amber-300 flex items-center justify-end gap-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> You ♠
+                        </span>
+                        <div class="flex items-center gap-1 text-[11px] font-extrabold text-purple-300">
+                            <span>💎 433</span>
+                            <span class="w-4 h-4 rounded-full bg-emerald-500 text-stone-950 flex items-center justify-center text-[10px] font-black cursor-pointer">+</span>
+                        </div>
+                    </div>
+                    <div class="avatar-circle border-amber-400 w-10 h-10 shadow-md">
+                        <span class="text-xl">👸</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- CENTER: 2x2 GAME MODE WOODEN CARDS -->
+        <main class="flex-1 flex justify-center items-center px-4">
+            <div class="grid grid-cols-2 gap-4 sm:gap-6 w-full max-w-xl">
+                
+                <!-- 1. PRACTICE CARD (Plays against 3 Bots) -->
+                <div id="btn-mode-practice" class="mode-card cursor-pointer">
+                    <span class="mode-info-btn">i</span>
+                    <div class="mode-icon-box text-3xl sm:text-4xl">🤖</div>
+                    <h3 class="mode-title">Practice</h3>
+                    <span class="mode-count">👥 5,805</span>
+                </div>
+
+                <!-- 2. PLAY PRIVATELY CARD (Room Code with Friends) -->
+                <div id="btn-mode-private" class="mode-card cursor-pointer">
+                    <span class="mode-info-btn">i</span>
+                    <div class="mode-icon-box text-3xl sm:text-4xl">🎴</div>
+                    <h3 class="mode-title">Play Privately</h3>
+                    <span class="mode-count">👥 447</span>
+                </div>
+
+                <!-- 3. PLAY ONLINE (Quick Matchmaking) -->
+                <div id="btn-mode-online" class="mode-card cursor-pointer">
+                    <span class="mode-info-btn">i</span>
+                    <div class="mode-icon-box text-3xl sm:text-4xl">🤵</div>
+                    <h3 class="mode-title">Play Online</h3>
+                    <span class="mode-count">👥 2,542</span>
+                </div>
+
+                <!-- 4. PLAY LOCALLY -->
+                <div id="btn-mode-local" class="mode-card cursor-pointer">
+                    <span class="mode-info-btn">i</span>
+                    <div class="mode-icon-box text-3xl sm:text-4xl">📶</div>
+                    <h3 class="mode-title">Play Locally</h3>
+                    <span class="mode-count">👥 17</span>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- BOTTOM-RIGHT ACTION BUTTONS -->
+        <footer class="w-full flex justify-end items-center gap-2 pr-1 z-10">
+            <!-- Claim Gift Box -->
+            <div class="claim-gift-box flex items-center gap-1.5 px-3 py-1.5 cursor-pointer">
+                <span class="text-lg">🎧</span>
+                <div class="text-left leading-none">
+                    <span class="text-[8px] font-black text-amber-200 block uppercase">CLAIM NOW!</span>
+                    <span class="text-[11px] font-black text-white">💎 11</span>
+                </div>
+            </div>
+
+            <!-- Inbox / Download Button with Red Notification -->
+            <button class="wood-square-btn relative">
+                <span>📥</span>
+                <span class="noti-badge"></span>
+            </button>
+
+            <!-- Leaderboard -->
+            <button class="wood-square-btn">
+                <span>🏆</span>
+            </button>
+
+            <!-- Shop with Red Notification -->
+            <button class="wood-square-btn relative">
+                <span>🛒</span>
+                <span class="noti-badge"></span>
+            </button>
+
+            <!-- Settings -->
+            <button class="wood-square-btn">
+                <span>⚙️</span>
+            </button>
+        </footer>
+
+    </div>
+
+    <!-- ==========================================================
+         PRIVATE ROOM MODAL (Triggered by 'Play Privately')
+         ========================================================== -->
+    <div id="private-room-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden justify-center items-center z-50 p-4">
+        <div class="bg-gradient-to-b from-stone-900 to-stone-950 border border-amber-500/40 rounded-2xl p-5 w-80 text-center shadow-2xl relative">
+            <button id="close-room-modal" class="absolute top-3 right-3 text-stone-400 hover:text-white font-black text-lg">✕</button>
+            <h2 class="text-xl font-black text-amber-400 mb-4 tracking-wide">PLAY PRIVATELY</h2>
+
+            <!-- Step 1: Options -->
+            <div id="room-selection-box" class="flex flex-col gap-3">
+                <button id="create-room-btn" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 active:scale-95 text-stone-950 font-black py-2.5 rounded-xl shadow-md text-xs uppercase tracking-wider transition">
+                    ➕ Naya Room Banayein (Create)
+                </button>
+                <div class="flex items-center gap-2">
+                    <div class="flex-1 h-px bg-stone-700"></div>
+                    <span class="text-[10px] text-stone-500 font-bold uppercase">YA CODE DAALEIN</span>
+                    <div class="flex-1 h-px bg-stone-700"></div>
+                </div>
+                <div class="flex gap-2">
+                    <input id="room-input" type="number" placeholder="4-Digit Code" class="w-2/3 bg-stone-950 border border-stone-700 rounded-xl px-3 py-2 text-center text-amber-300 font-black text-sm tracking-widest outline-none focus:border-amber-400">
+                    <button id="join-room-btn" class="w-1/3 bg-stone-800 hover:bg-stone-700 active:scale-95 font-bold text-white py-2 rounded-xl text-xs transition border border-stone-600">Join</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Waiting -->
+            <div id="room-waiting-box" class="hidden flex-col items-center">
+                <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Aapka Room Code</span>
+                <div id="display-room-code" class="text-3xl font-black text-amber-400 tracking-widest my-1 bg-black/60 px-6 py-1 rounded-xl border border-amber-500/40">----</div>
+                <p class="text-[10px] text-stone-400 mb-3">Dosto ke sath share karein</p>
+                <div class="w-full flex justify-between items-center bg-stone-950 px-3 py-1.5 rounded-xl border border-stone-800 mb-3">
+                    <span class="text-xs text-stone-400 font-semibold">Joined:</span>
+                    <span class="text-sm font-black text-emerald-400"><span id="player-count">1</span> / 4</span>
+                </div>
+                <button id="start-game-btn" class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 active:scale-95 text-stone-950 font-black py-2 rounded-xl shadow-md text-xs uppercase tracking-wider transition">
+                    🚀 Khel Shuru Karein (Start)
+                </button>
+                <span class="text-[9px] text-stone-500 mt-1">Khali jagah par Bots kheleinge</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================
+         ACTUAL GAME ARENA (TABLE & PLAYING CARDS)
+         ========================================================== -->
+    <div id="game-arena" class="w-full h-full relative flex flex-col justify-between overflow-hidden hidden">
+
+        <!-- TOP BAR: Left Round & Hukum Pills, Right Wooden Buttons -->
+        <header class="w-full flex justify-between items-center z-30 px-3 pt-2">
             <div class="flex items-center gap-2">
-                <div class="flex-1 h-px bg-stone-700"></div>
-                <span class="text-[10px] text-stone-500 font-bold uppercase">YA CODE DAALEIN</span>
-                <div class="flex-1 h-px bg-stone-700"></div>
+                <button id="back-to-home-btn" class="wood-btn px-2.5 py-1 text-xs font-black flex items-center gap-1 shadow-md">
+                    <span>🏠</span> <span class="hidden sm:inline">Home</span>
+                </button>
+
+                <div class="bg-black/60 border border-amber-900/40 px-3 py-1 rounded-xl flex items-center gap-2 shadow-md">
+                    <span class="text-sm">📋</span>
+                    <div class="text-left leading-tight">
+                        <span class="text-[8px] text-amber-200 block uppercase font-bold">Round</span>
+                        <span class="text-xs font-black text-white"><span id="round-num">1</span>/13</span>
+                    </div>
+                </div>
+
+                <div class="bg-black/60 border border-amber-500/30 px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-md">
+                    <span class="text-[9px] text-stone-300 font-bold uppercase">HUKUM:</span>
+                    <span id="hukum-display" class="text-xs font-black text-amber-400">🔒 Band</span>
+                </div>
             </div>
-            <div class="flex gap-2">
-                <input id="room-input" type="number" placeholder="4-Digit Code" class="w-2/3 bg-stone-950 border border-stone-700 rounded-xl px-3 py-2 text-center text-amber-300 font-black text-sm tracking-widest outline-none focus:border-amber-400">
-                <button id="join-room-btn" class="w-1/3 bg-stone-800 hover:bg-stone-700 active:scale-95 font-bold text-white py-2 rounded-xl text-xs transition border border-stone-600">Join</button>
+
+            <div class="flex items-center gap-1.5">
+                <button id="sound-btn" class="wood-btn w-9 h-9 flex flex-col items-center justify-center text-xs">
+                    <span>🔊</span>
+                </button>
+                <button id="fullscreen-btn" class="wood-btn w-9 h-9 flex flex-col items-center justify-center text-xs" title="Fullscreen">
+                    <span>⛶</span>
+                </button>
             </div>
-        </div>
+        </header>
 
-        <div id="room-waiting-box" class="hidden w-72 bg-stone-900 border border-stone-800 p-4 rounded-2xl shadow-xl flex flex-col items-center">
-            <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Room Code</span>
-            <div id="display-room-code" class="text-3xl font-black text-amber-400 tracking-widest my-1 bg-black/60 px-6 py-1 rounded-xl border border-amber-500/40">----</div>
-            <p class="text-[10px] text-stone-400 mb-3">Dosto ke sath share karein</p>
-            <div class="w-full flex justify-between items-center bg-stone-950 px-3 py-1.5 rounded-xl border border-stone-800 mb-3">
-                <span class="text-xs text-stone-400 font-semibold">Joined:</span>
-                <span class="text-sm font-black text-emerald-400"><span id="player-count">1</span> / 4</span>
+        <!-- TABLE ARENA: Avatars & Center Played Cards -->
+        <main class="flex-1 relative w-full h-full">
+
+            <!-- 1. TOP BOT (bot3 / Partner) -->
+            <div id="seat-top" class="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30">
+                <span class="pill-badge" id="name-top">bot3 ♠</span>
+                <div class="relative flex flex-col items-center">
+                    <div class="avatar-circle" id="ring-top">
+                        <span class="text-2xl">🤖</span>
+                    </div>
+                    <div class="bot-card-fan fan-top"></div>
+                </div>
+                <span class="pill-badge" id="score-top">0/0</span>
             </div>
-            <button id="start-game-btn" class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 active:scale-95 text-stone-950 font-black py-2 rounded-xl shadow-md text-xs uppercase tracking-wider transition">
-                🚀 Khel Shuru Karein (Start)
-            </button>
-            <span class="text-[9px] text-stone-500 mt-1">Khali jagah par Bots kheleinge</span>
-        </div>
-    </div>
 
-    <!-- TOP-LEFT HEADER -->
-    <div class="absolute top-2 left-3 flex items-center gap-2 z-30">
-        <div class="bg-black/60 border border-amber-900/40 px-3 py-1 rounded-xl flex items-center gap-2 shadow-md">
-            <span class="text-sm">📋</span>
-            <div class="text-left leading-tight">
-                <span class="text-[8px] text-amber-200 block uppercase font-bold">Round</span>
-                <span class="text-xs font-black text-white"><span id="round-num">1</span>/13</span>
+            <!-- 2. LEFT BOT (bot2) -->
+            <div id="seat-left" class="absolute left-2 top-[42%] -translate-y-1/2 flex flex-col items-center gap-1 z-30">
+                <span class="pill-badge" id="name-left">bot2 ♠</span>
+                <div class="relative flex items-center justify-center">
+                    <div class="avatar-circle" id="ring-left">
+                        <span class="text-2xl">🤖</span>
+                    </div>
+                    <div class="bot-card-fan fan-left"></div>
+                </div>
+                <span class="pill-badge" id="score-left">0/0</span>
             </div>
-        </div>
 
-        <div class="bg-black/60 border border-amber-500/30 px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-md">
-            <span class="text-[9px] text-stone-300 font-bold uppercase">HUKUM:</span>
-            <span id="hukum-display" class="text-xs font-black text-amber-400">🔒 Band</span>
-        </div>
-    </div>
-
-    <!-- TOP-RIGHT WOODEN BUTTONS -->
-    <div class="absolute top-2 right-3 flex items-center gap-1.5 z-30">
-        <button id="sound-btn" class="wood-btn w-9 h-9 flex flex-col items-center justify-center text-xs">
-            <span>🔊</span>
-        </button>
-        <button id="fullscreen-btn" class="wood-btn w-9 h-9 flex flex-col items-center justify-center text-xs" title="Fullscreen">
-            <span>⛶</span>
-        </button>
-    </div>
-
-    <!-- 1. TOP BOT (bot3 / Partner) -->
-    <div id="seat-top" class="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30">
-        <span class="pill-badge" id="name-top">bot3 ♠</span>
-        <div class="relative flex flex-col items-center">
-            <div class="avatar-circle" id="ring-top">
-                <span class="text-2xl">🤖</span>
+            <!-- 3. RIGHT BOT (bot1) -->
+            <div id="seat-right" class="absolute right-2 top-[42%] -translate-y-1/2 flex flex-col items-center gap-1 z-30">
+                <span class="pill-badge" id="name-right">bot1 ♠</span>
+                <div class="relative flex items-center justify-center">
+                    <div class="avatar-circle" id="ring-right">
+                        <span class="text-2xl">🤖</span>
+                    </div>
+                    <div class="bot-card-fan fan-right"></div>
+                </div>
+                <span class="pill-badge" id="score-right">0/0</span>
             </div>
-            <div class="bot-card-fan fan-top"></div>
-        </div>
-        <span class="pill-badge" id="score-top">0/0</span>
-    </div>
 
-    <!-- 2. LEFT BOT (bot2) -->
-    <div id="seat-left" class="absolute left-2 top-[42%] -translate-y-1/2 flex flex-col items-center gap-1 z-30">
-        <span class="pill-badge" id="name-left">bot2 ♠</span>
-        <div class="relative flex items-center justify-center">
-            <div class="avatar-circle" id="ring-left">
-                <span class="text-2xl">🤖</span>
+            <!-- 4. DEAD CENTER ARENA: Pool & Trick Cards -->
+            <div id="center-table-arena">
+                <div id="scattered-pool" class="absolute inset-0 flex justify-center items-center"></div>
+                <div id="active-trick" class="absolute inset-0"></div>
+                <div id="pool-badge" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 px-2.5 py-0.5 rounded-full bg-black/85 border border-amber-500/50 text-[10px] font-black text-amber-300 shadow">
+                    Pool: <span id="pool-count">0</span>
+                </div>
             </div>
-            <div class="bot-card-fan fan-left"></div>
-        </div>
-        <span class="pill-badge" id="score-left">0/0</span>
-    </div>
 
-    <!-- 3. RIGHT BOT (bot1) -->
-    <div id="seat-right" class="absolute right-2 top-[42%] -translate-y-1/2 flex flex-col items-center gap-1 z-30">
-        <span class="pill-badge" id="name-right">bot1 ♠</span>
-        <div class="relative flex items-center justify-center">
-            <div class="avatar-circle" id="ring-right">
-                <span class="text-2xl">🤖</span>
+        </main>
+
+        <!-- BOTTOM ARENA: "Your Turn" Status Pill, Hand Cards & You Profile -->
+        <footer class="w-full relative z-30 flex flex-col items-center pb-1">
+            <div id="turn-badge" class="pill-badge text-[11px] font-black px-4 py-0.5 mb-0.5 shadow-lg bg-black/90 border-amber-500/40 text-amber-300">
+                Your Turn
             </div>
-            <div class="bot-card-fan fan-right"></div>
-        </div>
-        <span class="pill-badge" id="score-right">0/0</span>
-    </div>
 
-    <!-- 4. DEAD CENTER ARENA: Pool & Trick Cards -->
-    <div id="center-table-arena">
-        <div id="scattered-pool" class="absolute inset-0 flex justify-center items-center"></div>
-        <div id="active-trick" class="absolute inset-0"></div>
-        <div id="pool-badge" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 px-2.5 py-0.5 rounded-full bg-black/85 border border-amber-500/50 text-[10px] font-black text-amber-300 shadow">
-            Pool: <span id="pool-count">0</span>
-        </div>
-    </div>
+            <div id="hand-container"></div>
 
-    <!-- 5. "YOUR TURN" STATUS PILL -->
-    <div class="absolute top-[59%] left-1/2 -translate-x-1/2 z-30">
-        <div id="turn-badge" class="pill-badge text-[11px] font-black px-4 py-0.5 shadow-lg bg-black/90 border-amber-500/40 text-amber-300">
-            Your Turn
-        </div>
-    </div>
+            <div class="flex items-center gap-1.5 -mt-3.5 z-40">
+                <span class="pill-badge text-emerald-400" id="name-bottom">● You ♠</span>
+                <div class="avatar-circle border-amber-400" id="ring-bottom">
+                    <span class="text-2xl">👸</span>
+                    <span class="absolute -top-1 -right-1 bg-amber-400 text-stone-950 font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center border border-white">D</span>
+                </div>
+                <span class="pill-badge" id="score-bottom">0/0</span>
+                <span class="pill-badge text-purple-300">💎 <span id="chips-count">433</span></span>
+            </div>
+        </footer>
 
-    <!-- 6. USER HAND (Bottom Wide Row) -->
-    <div id="hand-container"></div>
-
-    <!-- 7. USER PROFILE -->
-    <div class="absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-40">
-        <span class="pill-badge text-emerald-400" id="name-bottom">● You ♠</span>
-        <div class="avatar-circle border-amber-400" id="ring-bottom">
-            <span class="text-2xl">👸</span>
-            <span class="absolute -top-1 -right-1 bg-amber-400 text-stone-950 font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center border border-white">D</span>
-        </div>
-        <span class="pill-badge" id="score-bottom">0/0</span>
-        <span class="pill-badge text-purple-300">💎 <span id="chips-count">433</span></span>
     </div>
 
     <!-- Victory Modal -->
