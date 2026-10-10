@@ -1,4 +1,3 @@
-
 const socket = io();
 
 let myPlayerNumber = 1;
@@ -56,13 +55,11 @@ function playSound(type) {
     } catch (e) {}
 }
 
-// Sound Toggle
 document.getElementById('sound-btn').onclick = () => {
     soundEnabled = !soundEnabled;
     document.getElementById('sound-btn').innerText = soundEnabled ? '🔊' : '🔇';
 };
 
-// Fullscreen Toggle
 document.getElementById('fullscreen-btn').onclick = () => {
     if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(() => {});
@@ -127,9 +124,9 @@ function updateSeatLabels(isBotArray) {
     const me = (myPlayerNumber || 1) - 1;
 
     const relP = [
-        (me + 1) % 4, // Right
-        (me + 2) % 4, // Top (Partner)
-        (me + 3) % 4  // Left
+        (me + 1) % 4,
+        (me + 2) % 4,
+        (me + 3) % 4
     ];
 
     names.right.innerText = isBotArray[relP[0]] ? `Bot ${relP[0] + 1}` : `Player ${relP[0] + 1}`;
@@ -142,7 +139,6 @@ function updateSeatLabels(isBotArray) {
     icons.left.innerText = isBotArray[relP[2]] ? '🤖' : `P${relP[2] + 1}`;
 }
 
-// RENDER CALLBREAK FAN HAND
 socket.on('updateHand', (cards) => {
     handContainer.innerHTML = '';
 
@@ -170,15 +166,11 @@ socket.on('updateHand', (cards) => {
             <div class="card-center-suit" style="color: ${textColor};">${card.suit}</div>
         `;
 
-        const playAction = (e) => {
-            e.preventDefault();
+        el.onclick = () => {
             if (isMyTurn) {
                 socket.emit('playCard', { suit: card.suit, rank: card.rank });
             }
         };
-
-        el.onclick = playAction;
-        el.ontouchend = playAction;
 
         handContainer.appendChild(el);
     });
@@ -218,7 +210,6 @@ socket.on('gameState', (state) => {
         document.querySelectorAll('.hand-card').forEach(c => c.classList.remove('my-turn-card'));
     }
 
-    // Active ring in landscape
     Object.values(rings).forEach(r => r.classList.remove('turn-active'));
     if (myPlayerNumber) {
         const relativeActive = (activePlayer - (myPlayerNumber - 1) + 4) % 4;
@@ -229,7 +220,7 @@ socket.on('gameState', (state) => {
 
     if (state.message) statusPill.innerText = state.message;
 
-    // 1. SCATTERED POOL
+    // Center Pool Rendering
     scatteredPoolDiv.innerHTML = '';
     state.centerPool.forEach((card, idx) => {
         const cardEl = document.createElement('div');
@@ -250,13 +241,13 @@ socket.on('gameState', (state) => {
         scatteredPoolDiv.appendChild(cardEl);
     });
 
-    // 2. ACTIVE TRICK CARDS (Landscape Centered Offsets)
+    // Active Trick Rendering
     activeTrickDiv.innerHTML = '';
     const seatOffsets = {
-        0: { x: 0, y: 30 },   // Bottom (You)
-        1: { x: 38, y: 0 },   // Right
-        2: { x: 0, y: -30 },  // Top
-        3: { x: -38, y: 0 }   // Left
+        0: { x: 0, y: 30 },
+        1: { x: 38, y: 0 },
+        2: { x: 0, y: -30 },
+        3: { x: -38, y: 0 }
     };
 
     state.currentTrick.forEach((tc) => {
@@ -311,6 +302,6 @@ socket.on('gameOverStats', (data) => {
 });
 
 socket.on('roomFull', (msg) => { alert(msg); });
-            
+
 
     
