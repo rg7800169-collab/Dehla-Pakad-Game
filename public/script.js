@@ -35,6 +35,14 @@ function playSound(type) {
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
             osc.start(now);
             osc.stop(now + 0.15);
+        } else if (type === 'poolCollect') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.exponentialRampToValueAtTime(880, now + 0.25);
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+            osc.start(now);
+            osc.stop(now + 0.25);
         }
     } catch (e) {}
 }
@@ -78,7 +86,7 @@ const btnLocal = document.getElementById('btn-mode-local');
 const closeRoomModal = document.getElementById('close-room-modal');
 const backToHomeBtn = document.getElementById('back-to-home-btn');
 
-// 1. PRACTICE MODE (Instant 3 Bots Match)
+// 1. PRACTICE MODE (Plays against 3 Bots)
 if (btnPractice) {
     btnPractice.onclick = () => {
         autoLockLandscape();
@@ -89,7 +97,7 @@ if (btnPractice) {
     };
 }
 
-// 2. PLAY PRIVATELY (Opens Code Popup)
+// 2. PLAY PRIVATELY
 if (btnPrivate) {
     btnPrivate.onclick = () => {
         autoLockLandscape();
@@ -104,7 +112,7 @@ if (closeRoomModal) {
     };
 }
 
-// 3. PLAY ONLINE
+// 3. PLAY ONLINE & LOCAL
 if (btnOnline) {
     btnOnline.onclick = () => {
         autoLockLandscape();
@@ -273,7 +281,7 @@ const rings = {
     bottom: document.getElementById('ring-bottom')
 };
 
-// User Hand Rendering
+// Hand Rendering
 socket.on('updateHand', (cards) => {
     if (!handContainer) return;
     handContainer.innerHTML = '';
@@ -314,7 +322,6 @@ socket.on('gameState', (state) => {
 
     if (roundNum) roundNum.innerText = state.trickCount || 1;
     
-    // Pool Count update with null-safety
     if (poolCountEl && state.centerPool) {
         poolCountEl.innerText = state.centerPool.length;
     }
@@ -378,7 +385,7 @@ socket.on('gameState', (state) => {
         }
     }
 
-    // 2. Center Active Trick Cards (Aligned for Top Bot)
+    // 2. Active Trick Cards
     if (activeTrickDiv) {
         activeTrickDiv.innerHTML = '';
         const seatTransforms = {
@@ -424,4 +431,6 @@ socket.on('gameOverStats', (data) => {
     if (reason) reason.innerText = data.winReason;
     modal.classList.add('show-modal');
 });
-    
+
+
+        
