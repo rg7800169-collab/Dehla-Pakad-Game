@@ -86,7 +86,6 @@ function broadcastState(roomId, message = "", eventType = "state") {
 io.on('connection', (socket) => {
     let currentRoomId = null;
 
-    // Room Create Karna
     socket.on('createRoom', () => {
         let roomId = generateRoomId();
         while (rooms[roomId]) roomId = generateRoomId();
@@ -104,7 +103,7 @@ io.on('connection', (socket) => {
             ],
             hukumSuit: null,
             hukumRevealed: false,
-            remainingCardsDealt: false, // 8 patti baantne ka check
+            remainingCardsDealt: false,
             currentTurn: 0,
             leadSuit: null,
             currentTrick: [],
@@ -120,7 +119,6 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('playerCount', 1);
     });
 
-    // Room Join Karna
     socket.on('joinRoom', (roomId) => {
         const room = rooms[roomId];
         if (!room) {
@@ -147,7 +145,6 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('playerCount', room.players.length);
     });
 
-    // Khel Shuru Karna
     socket.on('requestStartGame', () => {
         if (!currentRoomId || !rooms[currentRoomId]) return;
         const room = rooms[currentRoomId];
@@ -156,7 +153,6 @@ io.on('connection', (socket) => {
         startGame(currentRoomId);
     });
 
-    // Card Chalna
     socket.on('playCard', (cardData) => {
         if (!currentRoomId || !rooms[currentRoomId]) return;
         const room = rooms[currentRoomId];
@@ -224,7 +220,7 @@ function startGame(roomId) {
     room.trickCount = 1;
     room.lastWinningPlayer = null;
 
-    // Pehle sirf 5 patti baantein
+    // Pehli 5 patti baantein
     dealCards(room, 5);
     io.to(roomId).emit('gameStarted');
     broadcastState(roomId, "Khel shuru! Player 1 pehli chaal chalein.", "start");
@@ -232,14 +228,16 @@ function startGame(roomId) {
     resetTurnTimer(roomId);
 }
 
-function resetTurnTimer(roomId) {
+// Bot turn delay: 1800ms (1.8 second)
+function resetTurnTimer(roomId, customDelay = null) {
     const room = rooms[roomId];
     if (!room) return;
 
     if (room.turnTimer) clearTimeout(room.turnTimer);
 
     if (room.isBot[room.currentTurn]) {
-        room.turnTimer = setTimeout(() => triggerBotTurn(roomId), 850);
+        const delay = customDelay !== null ? customDelay : 1800;
+        room.turnTimer = setTimeout(() => triggerBotTurn(roomId), delay);
     } else {
         room.turnTimer = setTimeout(() => {
             autoPlayLegalCard(roomId, room.currentTurn);
@@ -301,14 +299,11 @@ function handleCardPlay(roomId, playerIndex, cardIndex) {
         hand.splice(cardIndex, 1);
         room.currentTrick.push({ player: playerIndex, card });
 
-        // ========================================================
-        // HUKUM KHULTE HI BACHI HUI 8 PATTI BAANTNA
-        // ========================================================
+        // Hukum khulte hi turant bachi hui 8 patti baantna
         if (!hasLeadSuit && !room.hukumRevealed) {
             room.hukumSuit = card.suit;
             room.hukumRevealed = true;
 
-            // Jaise hukum khula, bachi hui 8 patti baant dein
             if (!room.remainingCardsDealt && room.deck.length > 0) {
                 dealCards(room, 8);
                 room.remainingCardsDealt = true;
@@ -328,10 +323,11 @@ function handleCardPlay(roomId, playerIndex, cardIndex) {
 
     if (room.currentTrick.length === 4) {
         broadcastState(roomId, `Chaal poori hui...`, "cardPlay");
-        setTimeout(() => resolveTrick(roomId), 1200);
+        // 4 patti table par 2.5 second tak ruki rahengi
+        setTimeout(() => resolveTrick(roomId), 2500);
     } else {
         room.currentTurn = (room.currentTurn + 1) % 4;
-        broadcastState(roomId, `Player ${room.currentTurn + 1} (${room.isBot[room.currentTurn] ? 'Bot' : 'Player'}) ki baari`, "cardPlay");
+        broadcastState(roomId, `Player ${room.currentTurn + 1} ki baari`, "cardPlay");
         resetTurnTimer(roomId);
     }
 }
@@ -368,25 +364,23 @@ function resolveTrick(roomId) {
     room.centerPool.push(...room.currentTrick.map(t => t.card));
 
     // ========================================================
-    // DEHLA PAKAD NIYAM: SAME PLAYER 2 TRICKS RULE
+    // SAME PLAYER 2 TRICKS RULE (DOST KI JEET PAR PATTI NAHI UTHEGI)
     // ========================================================
     const isSamePlayerTwice = (room.lastWinningPlayer !== null && room.lastWinningPlayer === winnerPlayer);
     const isLastTrick = (room.trickCount === 13);
 
     let handCollected = false;
-    let turnStatusMsg = "";
 
     if (isSamePlayerTwice || isLastTrick) {
-        // Patti uthayi gayi!
         let dehleCount = room.centerPool.filter(c => c.isDehla).length;
         room.teams[winningTeamIndex].cards += room.centerPool.length;
         room.teams[winningTeamIndex].dehle += dehleCount;
 
         room.centerPool = [];
-        room.lastWinningPlayer = null; // Reset
+        room.lastWinningPlayer = null;
         handCollected = true;
     } else {
-        // Patti nahi uthegi (Partner ya Opponent ki jeet par streak update)
+        // Dost ya opponent jeete toh patti table pool me jama rahegi
         room.lastWinningPlayer = winnerPlayer;
     }
 
@@ -394,7 +388,7 @@ function resolveTrick(roomId) {
     room.leadSuit = null;
     room.currentTurn = winnerPlayer;
 
-    // Fallback: Agar 5 tricks tak hukum na khula ho, toh 8 patti baant dein taaki khel ruke na
+    // Fallback: Agar 5 round tak hukum na khula ho toh bachi hui 8 patti baantein
     if (room.trickCount === 5 && !room.remainingCardsDealt && room.deck.length > 0) {
         dealCards(room, 8);
         room.remainingCardsDealt = true;
@@ -405,8 +399,9 @@ function resolveTrick(roomId) {
     if (room.trickCount > 13) {
         finishGame(roomId);
     } else {
-        broadcastState(roomId, turnStatusMsg, handCollected ? "poolCollect" : "trickEnd");
-        resetTurnTimer(roomId);
+        broadcastState(roomId, "", handCollected ? "poolCollect" : "trickEnd");
+        // Agli baazi shuru hone se pehle 1.2 second ka pause
+        resetTurnTimer(roomId, 1200);
     }
 }
 
@@ -455,4 +450,3 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server live on port ${PORT}`);
 });
-        
