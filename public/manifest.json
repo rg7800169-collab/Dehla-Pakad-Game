@@ -1,0 +1,16 @@
+{
+  "name": "Dehla Pakad Pro",
+  "short_name": "DehlaPakad",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0c0a09",
+  "theme_color": "#1c1917",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/10693/10693003.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
