@@ -18,14 +18,14 @@ const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
 const RANK_VALUES = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
 
 let players = [];
-let isBot = [false, false, false, false];
+let isBot = [false, true, true, true];
 let gameStarted = false;
 
 let deck = [];
 let playersHands = [[], [], [], []];
 let teams = [
-    { name: 'Team 1 (P1 & P3)', dehle: 0, cards: 0 },
-    { name: 'Team 2 (P2 & P4)', dehle: 0, cards: 0 }
+    { name: 'Team 1 (P1 & Bot 3)', dehle: 0, cards: 0 },
+    { name: 'Team 2 (Bot 2 & Bot 4)', dehle: 0, cards: 0 }
 ];
 
 let hukumSuit = null;
@@ -37,6 +37,16 @@ let centerPool = [];
 let trickCount = 1;
 let lastWinningTeam = null;
 let consecutiveWins = 0;
+let turnTimer = null;
+const TURN_TIMEOUT_SEC = 15;
+
+function cleanActivePlayers() {
+    players = players.filter(id => {
+        const s = io.sockets.sockets.get(id);
+        return s && s.connected;
+    });
+    return players;
+}
 
 function initDeck() {
     deck = [];
@@ -56,7 +66,6 @@ function initDeck() {
     }
 }
 
-// Server-side card sorting taaki client aur server dono hamesha ekdum sync rahein
 function sortHand(hand) {
     const suitOrder = { '♠': 1, '♥': 2, '♣': 3, '♦': 4 };
     hand.sort((a, b) => {
@@ -97,16 +106,18 @@ function broadcastState(message = "", eventType = "state") {
 }
 
 io.on('connection', (socket) => {
+    cleanActivePlayers();
+
     if (players.length >= 4 || gameStarted) {
-        socket.emit('roomFull', 'Room full hai ya match chal raha hai.');
+        socket.emit('roomFull', 'Room full hai ya khel pehle se shuru hai.');
         return;
     }
 
     players.push(socket.id);
-    let playerIndex = players.length - 1;
-    isBot[playerIndex] = false;
+    let mySeat = players.indexOf(socket.id);
+    isBot[mySeat] = false;
 
-    socket.emit('playerAssigned', playerIndex + 1);
+    socket.emit('playerAssigned', mySeat + 1);
     io.emit('playerCount', players.length);
 
     socket.on('requestStartGame', () => {
@@ -115,9 +126,11 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Exact card object find karna taaki wrong card na chale
     socket.on('playCard', (cardData) => {
-        let hand = playersHands[playerIndex];
+        const currentPIndex = players.indexOf(socket.id);
+        if (currentPIndex === -1 || currentPIndex !== currentTurn) return;
+
+        let hand = playersHands[currentPIndex];
         let cardIndex = -1;
 
         if (typeof cardData === 'object' && cardData !== null) {
@@ -127,31 +140,42 @@ io.on('connection', (socket) => {
         }
 
         if (cardIndex === -1) return;
-        handleCardPlay(playerIndex, cardIndex);
+        handleCardPlay(currentPIndex, cardIndex);
     });
 
     socket.on('disconnect', () => {
-        players = players.filter(id => id !== socket.id);
+        cleanActivePlayers();
         io.emit('playerCount', players.length);
         if (players.length === 0) {
             gameStarted = false;
+            if (turnTimer) clearTimeout(turnTimer);
         }
     });
 });
 
 function startGame() {
+    cleanActivePlayers();
     gameStarted = true;
 
     for (let i = 0; i < 4; i++) {
-        isBot[i] = (i >= players.length);
+        if (i < players.length) {
+            isBot[i] = false;
+            io.to(players[i]).emit('playerAssigned', i + 1);
+        } else {
+            isBot[i] = true;
+        }
     }
+
+    const p3Name = isBot[2] ? 'Bot 3' : 'P3';
+    const p2Name = isBot[1] ? 'Bot 2' : 'P2';
+    const p4Name = isBot[3] ? 'Bot 4' : 'P4';
+    teams = [
+        { name: `Team 1 (P1 & ${p3Name})`, dehle: 0, cards: 0 },
+        { name: `Team 2 (${p2Name} & ${p4Name})`, dehle: 0, cards: 0 }
+    ];
 
     initDeck();
     playersHands = [[], [], [], []];
-    teams = [
-        { name: 'Team 1 (P1 & P3)', dehle: 0, cards: 0 },
-        { name: 'Team 2 (P2 & P4)', dehle: 0, cards: 0 }
-    ];
     hukumSuit = null;
     hukumRevealed = false;
     currentTurn = 0;
@@ -165,29 +189,75 @@ function startGame() {
     io.emit('gameStarted');
     broadcastState("Khel shuru! Player 1 pehli chaal chalein.", "start");
 
-    if (isBot[0]) {
-        setTimeout(triggerBotTurn, 1000);
+    resetTurnTimer();
+}
+
+function resetTurnTimer() {
+    if (turnTimer) clearTimeout(turnTimer);
+
+    if (isBot[currentTurn]) {
+        turnTimer = setTimeout(triggerBotTurn, 850);
+    } else {
+        turnTimer = setTimeout(() => {
+            autoPlayLegalCard(currentTurn);
+        }, TURN_TIMEOUT_SEC * 1000);
     }
+}
+
+function autoPlayLegalCard(playerIdx) {
+    let hand = playersHands[playerIdx];
+    if (!hand || hand.length === 0) return;
+
+    let chosenIdx = 0;
+
+    if (currentTrick.length === 0) {
+        let nonDehlas = [];
+        hand.forEach((c, idx) => { if (!c.isDehla) nonDehlas.push(idx); });
+        chosenIdx = nonDehlas.length > 0 ? nonDehlas[Math.floor(Math.random() * nonDehlas.length)] : 0;
+    } else {
+        let suitIndices = [];
+        hand.forEach((c, i) => { if (c.suit === leadSuit) suitIndices.push(i); });
+
+        if (suitIndices.length > 0) {
+            chosenIdx = suitIndices[0];
+        } else {
+            if (!hukumRevealed) {
+                chosenIdx = 0;
+            } else {
+                let hukumIndices = [];
+                hand.forEach((c, i) => { if (c.suit === hukumSuit) hukumIndices.push(i); });
+                chosenIdx = hukumIndices.length > 0 ? hukumIndices[0] : 0;
+            }
+        }
+    }
+
+    handleCardPlay(playerIdx, chosenIdx);
 }
 
 function handleCardPlay(playerIndex, cardIndex) {
     if (playerIndex !== currentTurn || currentTrick.length >= 4) return;
+    if (turnTimer) clearTimeout(turnTimer);
 
     let hand = playersHands[playerIndex];
     let card = hand[cardIndex];
     if (!card) return;
 
-    // Follow Suit Rule
+    // Follow Suit Rule Check
     if (currentTrick.length > 0) {
         let hasLeadSuit = hand.some(c => c.suit === leadSuit);
         if (hasLeadSuit && card.suit !== leadSuit) {
-            if (!isBot[playerIndex]) {
+            if (!isBot[playerIndex] && players[playerIndex]) {
                 io.to(players[playerIndex]).emit('errorMsg', `Aapko ${leadSuit} chalna padega!`);
             }
+            resetTurnTimer();
             return;
         }
 
-        // Hukum reveal condition
+        // Remove card first to maintain hand integrity
+        hand.splice(cardIndex, 1);
+        currentTrick.push({ player: playerIndex, card });
+
+        // Hukum reveal check
         if (!hasLeadSuit && !hukumRevealed) {
             hukumSuit = card.suit;
             hukumRevealed = true;
@@ -196,65 +266,27 @@ function handleCardPlay(playerIndex, cardIndex) {
         }
     } else {
         leadSuit = card.suit;
+        hand.splice(cardIndex, 1);
+        currentTrick.push({ player: playerIndex, card });
     }
 
-    hand.splice(cardIndex, 1);
-    currentTrick.push({ player: playerIndex, card });
-
-    if (!isBot[playerIndex]) {
+    if (!isBot[playerIndex] && players[playerIndex]) {
         io.to(players[playerIndex]).emit('updateHand', hand);
     }
 
     if (currentTrick.length === 4) {
         broadcastState(`Chaal poori hui...`, "cardPlay");
-        setTimeout(resolveTrick, 1600);
+        setTimeout(resolveTrick, 1400);
     } else {
         currentTurn = (currentTurn + 1) % 4;
         broadcastState(`Player ${currentTurn + 1} (${isBot[currentTurn] ? 'Bot' : 'Player'}) ki baari`, "cardPlay");
-
-        if (isBot[currentTurn]) {
-            setTimeout(triggerBotTurn, 1000);
-        }
+        resetTurnTimer();
     }
 }
 
-// Bot Brain
 function triggerBotTurn() {
     if (!isBot[currentTurn] || currentTrick.length >= 4) return;
-
-    let hand = playersHands[currentTurn];
-    if (!hand || hand.length === 0) return;
-
-    let chosenCardIndex = 0;
-
-    if (currentTrick.length === 0) {
-        chosenCardIndex = Math.floor(Math.random() * hand.length);
-    } else {
-        let validIndices = [];
-        hand.forEach((c, idx) => {
-            if (c.suit === leadSuit) validIndices.push(idx);
-        });
-
-        if (validIndices.length > 0) {
-            chosenCardIndex = validIndices[Math.floor(Math.random() * validIndices.length)];
-        } else {
-            if (!hukumRevealed) {
-                chosenCardIndex = 0;
-            } else {
-                let hukumIndices = [];
-                hand.forEach((c, idx) => {
-                    if (c.suit === hukumSuit) hukumIndices.push(idx);
-                });
-                if (hukumIndices.length > 0) {
-                    chosenCardIndex = hukumIndices[0];
-                } else {
-                    chosenCardIndex = 0;
-                }
-            }
-        }
-    }
-
-    handleCardPlay(currentTurn, chosenCardIndex);
+    autoPlayLegalCard(currentTurn);
 }
 
 function resolveTrick() {
@@ -286,7 +318,7 @@ function resolveTrick() {
     }
 
     let handCollected = false;
-    let turnStatusMsg = `Player ${winnerPlayer + 1} (${isBot[winnerPlayer] ? 'Bot' : 'Player'}) ne yeh trick jeeti!`;
+    let turnStatusMsg = `Player ${winnerPlayer + 1} (${isBot[winnerPlayer] ? 'Bot' : 'Player'}) ne trick jeeti!`;
 
     if (consecutiveWins >= 2 || trickCount === 13) {
         let dehleCount = centerPool.filter(c => c.isDehla).length;
@@ -308,25 +340,45 @@ function resolveTrick() {
         finishGame();
     } else {
         broadcastState(turnStatusMsg, handCollected ? "poolCollect" : "trickEnd");
-        if (isBot[currentTurn]) {
-            setTimeout(triggerBotTurn, 1200);
-        }
+        resetTurnTimer();
     }
 }
 
 function finishGame() {
+    if (turnTimer) clearTimeout(turnTimer);
     let t1 = teams[0];
     let t2 = teams[1];
-    let winner = "Match Draw!";
+    let isKot = false;
+    let winningTeam = null;
+    let winReason = "";
 
-    if (t1.dehle > t2.dehle) winner = `🏆 Team 1 Jeet Gayi (${t1.dehle} Dehle)!`;
-    else if (t2.dehle > t1.dehle) winner = `🏆 Team 2 Jeet Gayi (${t2.dehle} Dehle)!`;
-    else {
-        if (t1.cards > t2.cards) winner = `🏆 Team 1 Cards ke aadhar par jeeti!`;
-        else if (t2.cards > t1.cards) winner = `🏆 Team 2 Cards ke aadhar par jeeti!`;
+    if (t1.dehle === 4) {
+        isKot = true;
+        winningTeam = t1.name;
+        winReason = "शानदार कोत! Team 1 ne sabhi 4 Dehle pakad liye!";
+    } else if (t2.dehle === 4) {
+        isKot = true;
+        winningTeam = t2.name;
+        winReason = "शानदार कोत! Team 2 ne sabhi 4 Dehle pakad liye!";
+    } else if (t1.dehle > t2.dehle) {
+        winningTeam = t1.name;
+        winReason = `${t1.name} Dehlo ke aadhar par jeeti!`;
+    } else if (t2.dehle > t1.dehle) {
+        winningTeam = t2.name;
+        winReason = `${t2.name} Dehlo ke aadhar par jeeti!`;
+    } else {
+        if (t1.cards > t2.cards) {
+            winningTeam = t1.name;
+            winReason = "2-2 Dehle barabar! Cards ke aadhar par jeet.";
+        } else if (t2.cards > t1.cards) {
+            winningTeam = t2.name;
+            winReason = "2-2 Dehle barabar! Cards ke aadhar par jeet.";
+        } else {
+            winReason = "ड्राॅ! Dehle aur Cards barabar rahe.";
+        }
     }
 
-    io.emit('gameOver', winner);
+    io.emit('gameOverStats', { teams, isKot, winningTeam, winReason });
     gameStarted = false;
 }
 
