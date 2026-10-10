@@ -4,24 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Dehla Pakad - Landscape Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json"> 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1c1917">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-stone-950 text-white w-screen h-screen overflow-hidden select-none font-sans">
 
-    <!-- 1. PORTRAIT ROTATE SCREEN WARNING (Jab phone seedha ho) -->
+    <!-- 1. Phone Rotate Overlay (Jab phone portrait me ho) -->
     <div id="rotate-warning" class="fixed inset-0 bg-stone-950/98 z-50 flex flex-col justify-center items-center text-center p-6">
         <div class="phone-rotate-icon mb-4 text-6xl">🔄📱</div>
         <h2 class="text-2xl font-black text-amber-400 mb-2">Phone Ko Rotate Karein</h2>
         <p class="text-sm text-stone-300 max-w-xs">Callbreak jaisa full-display game khelne ke liye mobile ko aada (Horizontal / Landscape) ghumayein.</p>
     </div>
 
-    <!-- 2. LOBBY SCREEN (Single Click 3-Bots Start) -->
+    <!-- 2. Lobby Screen -->
     <div id="lobby" class="fixed inset-0 bg-stone-950/95 backdrop-blur-md flex flex-col justify-center items-center z-40 p-4 text-center">
         <div class="w-14 h-14 mb-2 rounded-2xl bg-amber-500/20 border-2 border-amber-400 flex items-center justify-center text-2xl shadow-lg">🃏</div>
         <h1 class="text-2xl sm:text-3xl font-black text-amber-400 tracking-wide mb-1">DEHLA PAKAD</h1>
@@ -41,12 +40,11 @@
         </button>
     </div>
 
-    <!-- 3. MAIN GAME ARENA (Landscape 100vw x 100vh) -->
+    <!-- 3. Main Landscape Arena -->
     <div class="game-container w-full h-full relative flex flex-col justify-between overflow-hidden">
         
-        <!-- Header Strip -->
+        <!-- Header -->
         <header class="w-full h-9 bg-stone-900/90 border-b border-stone-800 px-3 flex justify-between items-center text-xs z-30">
-            <!-- Score T1 vs T2 -->
             <div class="flex items-center gap-3">
                 <div class="flex items-center gap-1.5">
                     <span class="text-[11px] font-bold text-sky-400">T1:</span>
@@ -61,12 +59,10 @@
                 </div>
             </div>
 
-            <!-- Center Status Message -->
             <div id="status-pill" class="text-[11px] text-stone-300 font-semibold truncate max-w-[280px]">
                 Game shuru ho raha hai...
             </div>
 
-            <!-- Right Controls: Hukum, Sound, Fullscreen -->
             <div class="flex items-center gap-2">
                 <div class="bg-black/60 border border-amber-500/40 px-2 py-0.5 rounded-lg flex items-center gap-1">
                     <span class="text-[10px] text-stone-400 font-bold uppercase">Hukum:</span>
@@ -77,19 +73,16 @@
             </div>
         </header>
 
-        <!-- Landscape Green Felt Table -->
+        <!-- Table -->
         <main class="flex-1 relative flex justify-center items-center overflow-hidden">
             <div class="landscape-table relative flex justify-center items-center shadow-2xl">
                 
-                <!-- Table Center: Scattered Pool (Gojh) -->
                 <div id="scattered-pool" class="absolute inset-0 flex justify-center items-center pointer-events-none"></div>
 
-                <!-- Pool Counter Badge -->
                 <div id="pool-badge" class="absolute z-10 px-2.5 py-0.5 rounded-full bg-black/80 border border-amber-500/40 text-[10px] font-black text-amber-300 shadow">
                     Pool: <span id="pool-count">0</span> Cards
                 </div>
 
-                <!-- Active 4 Trick Cards in Center -->
                 <div id="active-trick" class="absolute inset-0 flex justify-center items-center pointer-events-none z-20"></div>
 
                 <!-- Top Seat (Partner) -->
@@ -113,19 +106,17 @@
             </div>
         </main>
 
-        <!-- Bottom: User Hand (Wide Landscape Callbreak Fan) -->
+        <!-- Bottom Hand -->
         <footer class="w-full relative z-30 pb-1 flex flex-col items-center">
-            <!-- Turn Indicator Pill -->
             <div id="turn-badge" class="text-[10px] font-black px-3 py-0.5 rounded-full bg-stone-800 text-stone-300 mb-0.5 shadow-md">
                 Intezaar...
             </div>
-            <!-- 13 Cards Wide Container -->
             <div id="hand-container" class="flex justify-center items-end px-2"></div>
         </footer>
 
     </div>
 
-    <!-- 4. VICTORY & KOT MODAL -->
+    <!-- 4. Victory Modal -->
     <div id="game-over-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden justify-center items-center z-50 p-4">
         <div class="modal-card bg-gradient-to-b from-stone-900 to-stone-950 border border-amber-500/50 rounded-2xl p-5 w-full max-w-sm text-center shadow-2xl relative">
             <div id="kot-banner" class="hidden mb-2">
