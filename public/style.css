@@ -1,76 +1,115 @@
-/* Callbreak Casino Felt Table */
-.felt-table {
-    background: radial-gradient(circle at center, #1b4f2c 0%, #0d3019 75%, #071c0e 100%);
-    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.9), 0 10px 30px rgba(0, 0, 0, 0.8);
-    outline: 2px dashed rgba(212, 175, 55, 0.35);
-    outline-offset: -10px;
-}
-
 /* ==========================================================
-   FIX: HAR PATTI KA BACKGROUND WHITE & TEXT STRICTLY BLACK/RED
+   CALLBREAK LANDSCAPE TABLE & SCREEN LAYOUT
    ========================================================== */
-.hand-card, .active-trick-card, .pool-card-scattered {
-    background-color: #ffffff !important;
-    user-select: none;
-    box-sizing: border-box;
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #0c0a09;
+    overflow: hidden;
 }
 
-/* Red Cards */
-.hand-card.red, .active-trick-card.red, .pool-card-scattered.red,
-.hand-card.red *, .active-trick-card.red *, .pool-card-scattered.red * {
-    color: #dc2626 !important; /* Bold Red */
+/* 1. PORTRAIT DETECTION: Phone seedha hone par overlay dikhega */
+#rotate-warning {
+    display: none;
+}
+@media screen and (orientation: portrait) {
+    #rotate-warning {
+        display: flex !important;
+    }
 }
 
-/* Black Cards */
-.hand-card.black, .active-trick-card.black, .pool-card-scattered.black,
-.hand-card.black *, .active-trick-card.black *, .pool-card-scattered.black * {
-    color: #0f172a !important; /* Deep Jet Black */
+.phone-rotate-icon {
+    animation: rotatePhone 2s infinite ease-in-out;
+}
+@keyframes rotatePhone {
+    0% { transform: rotate(0deg); }
+    50% { transform: rotate(-90deg); }
+    100% { transform: rotate(0deg); }
+}
+
+/* 2. OVAL GREEN CASINO TABLE (Landscape Optimized) */
+.landscape-table {
+    width: 90vw;
+    max-width: 720px;
+    height: 54vh;
+    max-height: 250px;
+    background: radial-gradient(ellipse at center, #1e5a32 0%, #0d381d 75%, #061c0d 100%);
+    border-radius: 120px;
+    border: 6px solid #451a03; /* Rich Mahogany Wood Border */
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.9), 0 8px 25px rgba(0, 0, 0, 0.8);
+    outline: 2px dashed rgba(212, 175, 55, 0.3);
+    outline-offset: -8px;
 }
 
 /* ==========================================================
-   AAPKI PATTI (BADA SIZE & SMOOTH MOBILE VIEW)
+   CALLBREAK BOTTOM HAND (All 13 Cards Visible Fan)
    ========================================================== */
 #hand-container {
-    padding-top: 30px;
-    padding-bottom: 6px;
-    padding-left: 8px;
-    padding-right: 25px;
+    height: 76px;
+    max-width: 96vw;
     display: flex;
+    justify-content: center;
     align-items: flex-end;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    position: relative;
+    padding-bottom: 2px;
 }
 
 .hand-card {
-    width: 56px;            /* Bada size */
-    height: 84px;           /* Bada size */
-    border-radius: 7px;
-    border: 1.5px solid #cbd5e1;
-    box-shadow: -4px 0 10px rgba(0, 0, 0, 0.5);
-    margin-left: -22px;     /* Callbreak fan overlap */
+    width: 46px;
+    height: 68px;
+    background-color: #ffffff !important;
+    border-radius: 5px;
+    border: 1px solid #94a3b8;
+    box-shadow: -2px 0 6px rgba(0, 0, 0, 0.6);
+    margin-left: -20px; /* Real Callbreak overlapping spread */
     position: relative;
     cursor: pointer;
     flex-shrink: 0;
-    transition: transform 0.16s ease, z-index 0.16s ease;
+    user-select: none;
+    transition: transform 0.15s ease, z-index 0.15s ease, border-color 0.15s ease;
+    touch-action: manipulation;
 }
 
 .hand-card:first-child {
     margin-left: 0 !important;
 }
 
-/* Touch karne par patti upar uthegi */
+/* User Card Lift & Pop on Touch */
 .hand-card:hover, .hand-card:active {
-    transform: translateY(-24px) scale(1.1);
+    transform: translateY(-20px) scale(1.15) !important;
     z-index: 99 !important;
-    box-shadow: 0 16px 24px rgba(0, 0, 0, 0.75);
-    border-color: #f59e0b;
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.8);
+    border-color: #f59e0b !important;
+}
+
+.my-turn-card {
+    border-color: #10b981 !important;
+    animation: gentleBounce 1.2s infinite alternate ease-in-out;
+}
+@keyframes gentleBounce {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-6px); }
+}
+
+/* ==========================================================
+   CRISP TEXT COLORS (No Blank White)
+   ========================================================== */
+.hand-card.red, .active-trick-card.red, .pool-card-scattered.red,
+.hand-card.red *, .active-trick-card.red *, .pool-card-scattered.red * {
+    color: #dc2626 !important; /* Bold Red */
+}
+.hand-card.black, .active-trick-card.black, .pool-card-scattered.black,
+.hand-card.black *, .active-trick-card.black *, .pool-card-scattered.black * {
+    color: #0f172a !important; /* Deep Jet Black */
 }
 
 /* Top-Left Corner Index */
 .card-corner {
     position: absolute;
-    top: 3px;
-    left: 4px;
+    top: 2px;
+    left: 3px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -78,11 +117,11 @@
     pointer-events: none;
 }
 .card-corner .corner-rank {
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 900;
 }
 .card-corner .corner-suit {
-    font-size: 13px;
+    font-size: 11px;
     line-height: 1;
 }
 
@@ -90,72 +129,82 @@
 .card-center-suit {
     position: absolute;
     top: 52%;
-    left: 55%;
+    left: 54%;
     transform: translate(-50%, -50%);
-    font-size: 26px;
+    font-size: 22px;
     line-height: 1;
     pointer-events: none;
 }
 
 /* ==========================================================
-   TABLE PAR CHALI HUI PATTI (Active Trick)
+   TABLE CARDS (Active Trick & Gojh Pool)
    ========================================================== */
 .active-trick-card {
     position: absolute;
-    width: 54px;
-    height: 80px;
-    border-radius: 7px;
-    border: 2px solid #fbbf24;
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.8);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 3px 5px;
-    font-weight: 900;
-    z-index: 30;
-}
-
-/* Table par bikhri hui purani patti (Pool) */
-.pool-card-scattered {
-    position: absolute;
     width: 44px;
     height: 64px;
+    background-color: #ffffff !important;
     border-radius: 5px;
-    border: 1px solid #94a3b8;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6);
+    border: 2px solid #fbbf24;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     padding: 2px 4px;
+    font-weight: 900;
+    z-index: 25;
+}
+
+.pool-card-scattered {
+    position: absolute;
+    width: 36px;
+    height: 52px;
+    background-color: #f8fafc !important;
+    border-radius: 4px;
+    border: 1px solid #94a3b8;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1px 3px;
     font-weight: 800;
-    opacity: 0.94;
+    opacity: 0.92;
     pointer-events: none;
 }
 
-/* Player Avatars */
-.player-seat { z-index: 20; }
+/* Seats & Avatars */
+.player-seat { z-index: 15; }
 .avatar-ring {
-    width: 38px;
-    height: 38px;
+    width: 32px;
+    height: 32px;
     border-radius: 9999px;
     border: 2px solid #57534e;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #292524;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
     transition: all 0.2s ease;
 }
 .avatar-ring.turn-active {
     border-color: #22c55e;
-    box-shadow: 0 0 14px #22c55e;
+    box-shadow: 0 0 12px #22c55e;
     transform: scale(1.1);
 }
-.avatar-icon { font-size: 11px; font-weight: 800; }
-.player-name { font-size: 10px; color: #d6d3d1; margin-top: 2px; text-shadow: 0 1px 2px black; }
+.avatar-icon { font-size: 12px; }
+.player-name {
+    font-size: 9px;
+    color: #e2e8f0;
+    margin-top: 1px;
+    text-shadow: 0 1px 2px black;
+    font-weight: 700;
+}
 
-/* Custom Scrollbar */
-.custom-scroll::-webkit-scrollbar { height: 5px; }
-.custom-scroll::-webkit-scrollbar-thumb { background: #64748b; border-radius: 3px; }
-.pb-safe { padding-bottom: env(safe-area-inset-bottom, 8px); }
-
+/* Modal */
+#game-over-modal { display: none; }
+#game-over-modal.show-modal { display: flex !important; }
+.modal-card { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+@keyframes popIn {
+    0% { transform: scale(0.8) translateY(20px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+}
