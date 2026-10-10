@@ -31,11 +31,7 @@ html, body {
     box-shadow: inset 0 0 100px rgba(50, 20, 0, 0.55);
 }
 
-/* ==========================================================
-   CALLBREAK HOME SCREEN STYLES (SCREENSHOT MATCH)
-   ========================================================== */
-
-/* Top Header Elements */
+/* Header & Menu Buttons */
 .wood-square-btn {
     width: 38px;
     height: 38px;
@@ -71,7 +67,7 @@ html, body {
     box-shadow: 0 3px 6px rgba(0,0,0,0.4);
 }
 
-/* 2x2 Big Wooden Game Mode Cards */
+/* 2x2 Game Mode Cards */
 .mode-card {
     height: 100px;
     background: linear-gradient(145deg, #be6e3a, #844116);
@@ -148,9 +144,7 @@ html, body {
     border: 1.5px solid #ffffff;
 }
 
-/* ==========================================================
-   GAME TABLE & CARDS
-   ========================================================== */
+/* Game Arena Buttons & Elements */
 .wood-btn {
     background: linear-gradient(145deg, #be6e3a, #8f481c);
     border: 2px solid #57290d;
@@ -160,7 +154,6 @@ html, body {
 }
 .wood-btn:active { transform: scale(0.92); }
 
-/* Bot 3 Top Seat Position - Placed near header */
 #seat-top {
     top: 2px !important;
     transform: translate(-50%, 0);
@@ -193,6 +186,7 @@ html, body {
     box-shadow: 0 4px 10px rgba(0,0,0,0.45);
     position: relative;
     z-index: 10;
+    transition: transform 0.2s ease, border-color 0.2s ease;
 }
 .avatar-circle.turn-glow {
     border-color: #22c55e !important;
@@ -225,30 +219,36 @@ html, body {
 .card-face.red, .card-face.red * { color: #dc2626 !important; }
 .card-face.black, .card-face.black * { color: #0f172a !important; }
 
+/* Hand Cards & 13-Card Layout */
 #hand-container {
-    position: absolute;
-    bottom: 0px;
-    left: 0;
-    right: 0;
-    height: 130px;
+    position: relative;
+    width: 100%;
+    max-width: 96vw;
+    height: 125px;
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    padding-bottom: 2px;
+    padding-bottom: 4px;
     z-index: 35;
+    pointer-events: auto;
 }
+
 .hand-card {
-    width: clamp(66px, 8.2vw, 82px);
-    height: clamp(104px, 13vw, 126px);
-    margin-left: clamp(-32px, -3.8vw, -24px);
+    width: clamp(58px, 7.5vw, 78px);
+    height: clamp(92px, 12vw, 120px);
+    margin-left: clamp(-38px, -4.6vw, -24px);
     cursor: pointer;
     flex-shrink: 0;
-    transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), z-index 0.16s;
+    transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease;
     touch-action: manipulation;
+    will-change: transform;
 }
-.hand-card:first-child { margin-left: 0 !important; }
+.hand-card:first-child { 
+    margin-left: 0 !important; 
+}
+
 .hand-card:hover, .hand-card:active {
-    transform: translateY(-30px) scale(1.14) !important;
+    transform: translateY(-28px) scale(1.14) !important;
     z-index: 99 !important;
     box-shadow: 0 16px 28px rgba(0, 0, 0, 0.7);
     border-color: #f59e0b !important;
@@ -265,12 +265,12 @@ html, body {
     pointer-events: none;
     z-index: 2;
 }
-.corner-rank { font-size: 18px; font-weight: 900; letter-spacing: -1px; }
-.corner-suit { font-size: 14px; line-height: 1; margin-top: -1px; }
+.corner-rank { font-size: 17px; font-weight: 900; letter-spacing: -1px; }
+.corner-suit { font-size: 13px; line-height: 1; margin-top: -1px; }
 
 .court-card-body {
     position: absolute;
-    top: 4px; right: 4px; bottom: 4px; left: 24px;
+    top: 4px; right: 4px; bottom: 4px; left: 22px;
     border: 1px solid #e2e8f0;
     border-radius: 4px;
     display: flex;
@@ -283,12 +283,16 @@ html, body {
 .court-svg { width: 100%; height: 100%; }
 
 .num-card-body {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
+    position: absolute; 
+    inset: 0;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
     pointer-events: none;
 }
-.big-center-suit { font-size: 34px; line-height: 1; margin-left: 12px; }
+.big-center-suit { font-size: 32px; line-height: 1; margin-left: 10px; }
 
+/* Center Table Arena */
 #center-table-arena {
     position: absolute;
     top: 46%; left: 50%;
@@ -298,7 +302,6 @@ html, body {
     z-index: 20;
 }
 
-/* Pool 4 section ko hide karne ke liye */
 #pool-badge {
     display: none !important;
 }
@@ -310,16 +313,20 @@ html, body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: transform 0.2s ease;
+    transition: transform 0.25s ease;
+    will-change: transform;
 }
+
 .pool-card-scattered {
     position: absolute;
     width: 44px; height: 66px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.4);
     opacity: 0.94;
     pointer-events: none;
+    transition: transform 0.3s ease;
 }
 
+/* Modals & Rotation */
 #rotate-warning { display: none; }
 @media screen and (orientation: portrait) {
     #rotate-warning { display: flex !important; }
@@ -327,3 +334,5 @@ html, body {
 
 #game-over-modal { display: none; }
 #game-over-modal.show-modal { display: flex !important; }
+
+    
