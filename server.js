@@ -17,39 +17,15 @@ const SUITS = ['♠', '♥', '♣', '♦'];
 const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 const RANK_VALUES = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
 
-let players = [];
-let isBot = [false, true, true, true];
-let gameStarted = false;
+// Har room ka alag state store karne ke liye
+let rooms = {};
 
-let deck = [];
-let playersHands = [[], [], [], []];
-let teams = [
-    { name: 'Team 1 (P1 & Bot 3)', dehle: 0, cards: 0 },
-    { name: 'Team 2 (Bot 2 & Bot 4)', dehle: 0, cards: 0 }
-];
-
-let hukumSuit = null;
-let hukumRevealed = false;
-let currentTurn = 0;
-let leadSuit = null;
-let currentTrick = []; 
-let centerPool = []; 
-let trickCount = 1;
-let lastWinningTeam = null;
-let consecutiveWins = 0;
-let turnTimer = null;
-const TURN_TIMEOUT_SEC = 15;
-
-function cleanActivePlayers() {
-    players = players.filter(id => {
-        const s = io.sockets.sockets.get(id);
-        return s && s.connected;
-    });
-    return players;
+function generateRoomId() {
+    return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
 function initDeck() {
-    deck = [];
+    let deck = [];
     for (let suit of SUITS) {
         for (let rank of RANKS) {
             deck.push({
@@ -64,6 +40,7 @@ function initDeck() {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
     }
+    return deck;
 }
 
 function sortHand(hand) {
@@ -74,65 +51,122 @@ function sortHand(hand) {
     });
 }
 
-function dealCards(count) {
+function dealCards(room, count) {
     for (let i = 0; i < count; i++) {
         for (let p = 0; p < 4; p++) {
-            if (deck.length > 0) {
-                playersHands[p].push(deck.pop());
+            if (room.deck.length > 0) {
+                room.playersHands[p].push(room.deck.pop());
             }
         }
     }
     for (let p = 0; p < 4; p++) {
-        sortHand(playersHands[p]);
+        sortHand(room.playersHands[p]);
     }
-    players.forEach((socketId, idx) => {
-        io.to(socketId).emit('updateHand', playersHands[idx]);
+    room.players.forEach((socketId, idx) => {
+        io.to(socketId).emit('updateHand', room.playersHands[idx]);
     });
 }
 
-function broadcastState(message = "", eventType = "state") {
-    io.emit('gameState', {
-        teams,
-        hukumSuit,
-        hukumRevealed,
-        currentTurn,
-        currentTrick,
-        centerPool,
-        trickCount,
+function broadcastState(roomId, message = "", eventType = "state") {
+    const room = rooms[roomId];
+    if (!room) return;
+    io.to(roomId).emit('gameState', {
+        teams: room.teams,
+        hukumSuit: room.hukumSuit,
+        hukumRevealed: room.hukumRevealed,
+        currentTurn: room.currentTurn,
+        currentTrick: room.currentTrick,
+        centerPool: room.centerPool,
+        trickCount: room.trickCount,
         message,
         eventType,
-        isBot
+        isBot: room.isBot
     });
 }
 
 io.on('connection', (socket) => {
-    cleanActivePlayers();
+    let currentRoomId = null;
 
-    if (players.length >= 4 || gameStarted) {
-        socket.emit('roomFull', 'Room full hai ya khel pehle se shuru hai.');
-        return;
-    }
+    // Room Create Karna
+    socket.on('createRoom', () => {
+        let roomId = generateRoomId();
+        while (rooms[roomId]) roomId = generateRoomId();
 
-    players.push(socket.id);
-    let mySeat = players.indexOf(socket.id);
-    isBot[mySeat] = false;
+        rooms[roomId] = {
+            id: roomId,
+            players: [socket.id],
+            isBot: [false, true, true, true],
+            gameStarted: false,
+            deck: [],
+            playersHands: [[], [], [], []],
+            teams: [
+                { name: 'Team 1 (P1 & Bot 3)', dehle: 0, cards: 0 },
+                { name: 'Team 2 (Bot 2 & Bot 4)', dehle: 0, cards: 0 }
+            ],
+            hukumSuit: null,
+            hukumRevealed: false,
+            currentTurn: 0,
+            leadSuit: null,
+            currentTrick: [],
+            centerPool: [],
+            trickCount: 1,
+            lastWinningTeam: null,
+            consecutiveWins: 0,
+            turnTimer: null
+        };
 
-    socket.emit('playerAssigned', mySeat + 1);
-    io.emit('playerCount', players.length);
-
-    socket.on('requestStartGame', () => {
-        if (!gameStarted) {
-            startGame();
-        }
+        currentRoomId = roomId;
+        socket.join(roomId);
+        socket.emit('roomCreated', { roomId, playerNumber: 1 });
+        io.to(roomId).emit('playerCount', 1);
     });
 
+    // Room Join Karna
+    socket.on('joinRoom', (roomId) => {
+        const room = rooms[roomId];
+        if (!room) {
+            socket.emit('errorMsg', 'Yeh Room Code galat hai!');
+            return;
+        }
+        if (room.players.length >= 4) {
+            socket.emit('errorMsg', 'Yeh Room pehle se full hai!');
+            return;
+        }
+        if (room.gameStarted) {
+            socket.emit('errorMsg', 'Is room me match pehle se shuru ho chuka hai!');
+            return;
+        }
+
+        room.players.push(socket.id);
+        const mySeat = room.players.length;
+        room.isBot[mySeat - 1] = false;
+
+        currentRoomId = roomId;
+        socket.join(roomId);
+
+        socket.emit('roomJoined', { roomId, playerNumber: mySeat });
+        io.to(roomId).emit('playerCount', room.players.length);
+    });
+
+    // Khel Shuru Karna
+    socket.on('requestStartGame', () => {
+        if (!currentRoomId || !rooms[currentRoomId]) return;
+        const room = rooms[currentRoomId];
+        if (room.gameStarted) return;
+
+        startGame(currentRoomId);
+    });
+
+    // Card Chalna
     socket.on('playCard', (cardData) => {
-        const currentPIndex = players.indexOf(socket.id);
-        if (currentPIndex === -1 || currentPIndex !== currentTurn) return;
+        if (!currentRoomId || !rooms[currentRoomId]) return;
+        const room = rooms[currentRoomId];
+        const playerIndex = room.players.indexOf(socket.id);
 
-        let hand = playersHands[currentPIndex];
+        if (playerIndex === -1 || playerIndex !== room.currentTurn) return;
+
+        let hand = room.playersHands[playerIndex];
         let cardIndex = -1;
-
         if (typeof cardData === 'object' && cardData !== null) {
             cardIndex = hand.findIndex(c => c.suit === cardData.suit && c.rank === cardData.rank);
         } else if (typeof cardData === 'number') {
@@ -140,165 +174,178 @@ io.on('connection', (socket) => {
         }
 
         if (cardIndex === -1) return;
-        handleCardPlay(currentPIndex, cardIndex);
+        handleCardPlay(currentRoomId, playerIndex, cardIndex);
     });
 
     socket.on('disconnect', () => {
-        cleanActivePlayers();
-        io.emit('playerCount', players.length);
-        if (players.length === 0) {
-            gameStarted = false;
-            if (turnTimer) clearTimeout(turnTimer);
+        if (!currentRoomId || !rooms[currentRoomId]) return;
+        const room = rooms[currentRoomId];
+
+        room.players = room.players.filter(id => id !== socket.id);
+        io.to(currentRoomId).emit('playerCount', room.players.length);
+
+        if (room.players.length === 0) {
+            if (room.turnTimer) clearTimeout(room.turnTimer);
+            delete rooms[currentRoomId];
         }
     });
 });
 
-function startGame() {
-    cleanActivePlayers();
-    gameStarted = true;
+function startGame(roomId) {
+    const room = rooms[roomId];
+    if (!room) return;
+
+    room.gameStarted = true;
 
     for (let i = 0; i < 4; i++) {
-        if (i < players.length) {
-            isBot[i] = false;
-            io.to(players[i]).emit('playerAssigned', i + 1);
+        if (i < room.players.length) {
+            room.isBot[i] = false;
+            io.to(room.players[i]).emit('playerAssigned', i + 1);
         } else {
-            isBot[i] = true;
+            room.isBot[i] = true;
         }
     }
 
-    const p3Name = isBot[2] ? 'Bot 3' : 'P3';
-    const p2Name = isBot[1] ? 'Bot 2' : 'P2';
-    const p4Name = isBot[3] ? 'Bot 4' : 'P4';
-    teams = [
+    const p3Name = room.isBot[2] ? 'Bot 3' : 'P3';
+    const p2Name = room.isBot[1] ? 'Bot 2' : 'P2';
+    const p4Name = room.isBot[3] ? 'Bot 4' : 'P4';
+    room.teams = [
         { name: `Team 1 (P1 & ${p3Name})`, dehle: 0, cards: 0 },
         { name: `Team 2 (${p2Name} & ${p4Name})`, dehle: 0, cards: 0 }
     ];
 
-    initDeck();
-    playersHands = [[], [], [], []];
-    hukumSuit = null;
-    hukumRevealed = false;
-    currentTurn = 0;
-    currentTrick = [];
-    centerPool = [];
-    trickCount = 1;
-    lastWinningTeam = null;
-    consecutiveWins = 0;
+    room.deck = initDeck();
+    room.playersHands = [[], [], [], []];
+    room.hukumSuit = null;
+    room.hukumRevealed = false;
+    room.currentTurn = 0;
+    room.currentTrick = [];
+    room.centerPool = [];
+    room.trickCount = 1;
+    room.lastWinningTeam = null;
+    room.consecutiveWins = 0;
 
-    dealCards(5);
-    io.emit('gameStarted');
-    broadcastState("Khel shuru! Player 1 pehli chaal chalein.", "start");
+    dealCards(room, 5);
+    io.to(roomId).emit('gameStarted');
+    broadcastState(roomId, "Khel shuru! Player 1 pehli chaal chalein.", "start");
 
-    resetTurnTimer();
+    resetTurnTimer(roomId);
 }
 
-function resetTurnTimer() {
-    if (turnTimer) clearTimeout(turnTimer);
+function resetTurnTimer(roomId) {
+    const room = rooms[roomId];
+    if (!room) return;
 
-    if (isBot[currentTurn]) {
-        turnTimer = setTimeout(triggerBotTurn, 850);
+    if (room.turnTimer) clearTimeout(room.turnTimer);
+
+    if (room.isBot[room.currentTurn]) {
+        room.turnTimer = setTimeout(() => triggerBotTurn(roomId), 850);
     } else {
-        turnTimer = setTimeout(() => {
-            autoPlayLegalCard(currentTurn);
-        }, TURN_TIMEOUT_SEC * 1000);
+        room.turnTimer = setTimeout(() => {
+            autoPlayLegalCard(roomId, room.currentTurn);
+        }, 15000);
     }
 }
 
-function autoPlayLegalCard(playerIdx) {
-    let hand = playersHands[playerIdx];
+function autoPlayLegalCard(roomId, playerIdx) {
+    const room = rooms[roomId];
+    if (!room) return;
+
+    let hand = room.playersHands[playerIdx];
     if (!hand || hand.length === 0) return;
 
     let chosenIdx = 0;
-
-    if (currentTrick.length === 0) {
+    if (room.currentTrick.length === 0) {
         let nonDehlas = [];
         hand.forEach((c, idx) => { if (!c.isDehla) nonDehlas.push(idx); });
         chosenIdx = nonDehlas.length > 0 ? nonDehlas[Math.floor(Math.random() * nonDehlas.length)] : 0;
     } else {
         let suitIndices = [];
-        hand.forEach((c, i) => { if (c.suit === leadSuit) suitIndices.push(i); });
-
+        hand.forEach((c, i) => { if (c.suit === room.leadSuit) suitIndices.push(i); });
         if (suitIndices.length > 0) {
             chosenIdx = suitIndices[0];
         } else {
-            if (!hukumRevealed) {
+            if (!room.hukumRevealed) {
                 chosenIdx = 0;
             } else {
                 let hukumIndices = [];
-                hand.forEach((c, i) => { if (c.suit === hukumSuit) hukumIndices.push(i); });
+                hand.forEach((c, i) => { if (c.suit === room.hukumSuit) hukumIndices.push(i); });
                 chosenIdx = hukumIndices.length > 0 ? hukumIndices[0] : 0;
             }
         }
     }
 
-    handleCardPlay(playerIdx, chosenIdx);
+    handleCardPlay(roomId, playerIdx, chosenIdx);
 }
 
-function handleCardPlay(playerIndex, cardIndex) {
-    if (playerIndex !== currentTurn || currentTrick.length >= 4) return;
-    if (turnTimer) clearTimeout(turnTimer);
+function handleCardPlay(roomId, playerIndex, cardIndex) {
+    const room = rooms[roomId];
+    if (!room || playerIndex !== room.currentTurn || room.currentTrick.length >= 4) return;
+    if (room.turnTimer) clearTimeout(room.turnTimer);
 
-    let hand = playersHands[playerIndex];
+    let hand = room.playersHands[playerIndex];
     let card = hand[cardIndex];
     if (!card) return;
 
     // Follow Suit Rule Check
-    if (currentTrick.length > 0) {
-        let hasLeadSuit = hand.some(c => c.suit === leadSuit);
-        if (hasLeadSuit && card.suit !== leadSuit) {
-            if (!isBot[playerIndex] && players[playerIndex]) {
-                io.to(players[playerIndex]).emit('errorMsg', `Aapko ${leadSuit} chalna padega!`);
+    if (room.currentTrick.length > 0) {
+        let hasLeadSuit = hand.some(c => c.suit === room.leadSuit);
+        if (hasLeadSuit && card.suit !== room.leadSuit) {
+            if (!room.isBot[playerIndex] && room.players[playerIndex]) {
+                io.to(room.players[playerIndex]).emit('errorMsg', `Aapko ${room.leadSuit} chalna padega!`);
             }
-            resetTurnTimer();
+            resetTurnTimer(roomId);
             return;
         }
 
-        // Remove card first to maintain hand integrity
         hand.splice(cardIndex, 1);
-        currentTrick.push({ player: playerIndex, card });
+        room.currentTrick.push({ player: playerIndex, card });
 
-        // Hukum reveal check
-        if (!hasLeadSuit && !hukumRevealed) {
-            hukumSuit = card.suit;
-            hukumRevealed = true;
-            dealCards(8);
-            broadcastState(`HUKUM KHULA: ${hukumSuit}! Sabhi ko bache 8 cards mil gaye.`, "hukum");
+        if (!hasLeadSuit && !room.hukumRevealed) {
+            room.hukumSuit = card.suit;
+            room.hukumRevealed = true;
+            dealCards(room, 8);
+            broadcastState(roomId, `HUKUM KHULA: ${room.hukumSuit}! Sabhi ko bache 8 cards mil gaye.`, "hukum");
         }
     } else {
-        leadSuit = card.suit;
+        room.leadSuit = card.suit;
         hand.splice(cardIndex, 1);
-        currentTrick.push({ player: playerIndex, card });
+        room.currentTrick.push({ player: playerIndex, card });
     }
 
-    if (!isBot[playerIndex] && players[playerIndex]) {
-        io.to(players[playerIndex]).emit('updateHand', hand);
+    if (!room.isBot[playerIndex] && room.players[playerIndex]) {
+        io.to(room.players[playerIndex]).emit('updateHand', hand);
     }
 
-    if (currentTrick.length === 4) {
-        broadcastState(`Chaal poori hui...`, "cardPlay");
-        setTimeout(resolveTrick, 1400);
+    if (room.currentTrick.length === 4) {
+        broadcastState(roomId, `Chaal poori hui...`, "cardPlay");
+        setTimeout(() => resolveTrick(roomId), 1400);
     } else {
-        currentTurn = (currentTurn + 1) % 4;
-        broadcastState(`Player ${currentTurn + 1} (${isBot[currentTurn] ? 'Bot' : 'Player'}) ki baari`, "cardPlay");
-        resetTurnTimer();
+        room.currentTurn = (room.currentTurn + 1) % 4;
+        broadcastState(roomId, `Player ${room.currentTurn + 1} (${room.isBot[room.currentTurn] ? 'Bot' : 'Player'}) ki baari`, "cardPlay");
+        resetTurnTimer(roomId);
     }
 }
 
-function triggerBotTurn() {
-    if (!isBot[currentTurn] || currentTrick.length >= 4) return;
-    autoPlayLegalCard(currentTurn);
+function triggerBotTurn(roomId) {
+    const room = rooms[roomId];
+    if (!room || !room.isBot[room.currentTurn] || room.currentTrick.length >= 4) return;
+    autoPlayLegalCard(roomId, room.currentTurn);
 }
 
-function resolveTrick() {
-    let winningTrick = currentTrick[0];
+function resolveTrick(roomId) {
+    const room = rooms[roomId];
+    if (!room) return;
+
+    let winningTrick = room.currentTrick[0];
 
     for (let i = 1; i < 4; i++) {
-        let candidate = currentTrick[i];
-        if (hukumRevealed && candidate.card.suit === hukumSuit) {
-            if (winningTrick.card.suit !== hukumSuit || RANK_VALUES[candidate.card.rank] > RANK_VALUES[winningTrick.card.rank]) {
+        let candidate = room.currentTrick[i];
+        if (room.hukumRevealed && candidate.card.suit === room.hukumSuit) {
+            if (winningTrick.card.suit !== room.hukumSuit || RANK_VALUES[candidate.card.rank] > RANK_VALUES[winningTrick.card.rank]) {
                 winningTrick = candidate;
             }
-        } else if (candidate.card.suit === leadSuit && winningTrick.card.suit !== hukumSuit) {
+        } else if (candidate.card.suit === room.leadSuit && winningTrick.card.suit !== room.hukumSuit) {
             if (RANK_VALUES[candidate.card.rank] > RANK_VALUES[winningTrick.card.rank]) {
                 winningTrick = candidate;
             }
@@ -308,46 +355,49 @@ function resolveTrick() {
     let winnerPlayer = winningTrick.player;
     let winningTeamIndex = winnerPlayer % 2;
 
-    centerPool.push(...currentTrick.map(t => t.card));
+    room.centerPool.push(...room.currentTrick.map(t => t.card));
 
-    if (lastWinningTeam === winningTeamIndex) {
-        consecutiveWins++;
+    if (room.lastWinningTeam === winningTeamIndex) {
+        room.consecutiveWins++;
     } else {
-        lastWinningTeam = winningTeamIndex;
-        consecutiveWins = 1;
+        room.lastWinningTeam = winningTeamIndex;
+        room.consecutiveWins = 1;
     }
 
     let handCollected = false;
-    let turnStatusMsg = `Player ${winnerPlayer + 1} (${isBot[winnerPlayer] ? 'Bot' : 'Player'}) ne trick jeeti!`;
+    let turnStatusMsg = `Player ${winnerPlayer + 1} (${room.isBot[winnerPlayer] ? 'Bot' : 'Player'}) ne trick jeeti!`;
 
-    if (consecutiveWins >= 2 || trickCount === 13) {
-        let dehleCount = centerPool.filter(c => c.isDehla).length;
-        teams[winningTeamIndex].cards += centerPool.length;
-        teams[winningTeamIndex].dehle += dehleCount;
+    if (room.consecutiveWins >= 2 || room.trickCount === 13) {
+        let dehleCount = room.centerPool.filter(c => c.isDehla).length;
+        room.teams[winningTeamIndex].cards += room.centerPool.length;
+        room.teams[winningTeamIndex].dehle += dehleCount;
 
-        turnStatusMsg = `${teams[winningTeamIndex].name} ne pool utha liya (${centerPool.length} Cards, ${dehleCount} Dehle)!`;
-        centerPool = [];
-        consecutiveWins = 0;
+        turnStatusMsg = `${room.teams[winningTeamIndex].name} ne pool utha liya (${room.centerPool.length} Cards, ${dehleCount} Dehle)!`;
+        room.centerPool = [];
+        room.consecutiveWins = 0;
         handCollected = true;
     }
 
-    currentTrick = [];
-    leadSuit = null;
-    currentTurn = winnerPlayer;
-    trickCount++;
+    room.currentTrick = [];
+    room.leadSuit = null;
+    room.currentTurn = winnerPlayer;
+    room.trickCount++;
 
-    if (trickCount > 13) {
-        finishGame();
+    if (room.trickCount > 13) {
+        finishGame(roomId);
     } else {
-        broadcastState(turnStatusMsg, handCollected ? "poolCollect" : "trickEnd");
-        resetTurnTimer();
+        broadcastState(roomId, turnStatusMsg, handCollected ? "poolCollect" : "trickEnd");
+        resetTurnTimer(roomId);
     }
 }
 
-function finishGame() {
-    if (turnTimer) clearTimeout(turnTimer);
-    let t1 = teams[0];
-    let t2 = teams[1];
+function finishGame(roomId) {
+    const room = rooms[roomId];
+    if (!room) return;
+
+    if (room.turnTimer) clearTimeout(room.turnTimer);
+    let t1 = room.teams[0];
+    let t2 = room.teams[1];
     let isKot = false;
     let winningTeam = null;
     let winReason = "";
@@ -378,12 +428,12 @@ function finishGame() {
         }
     }
 
-    io.emit('gameOverStats', { teams, isKot, winningTeam, winReason });
-    gameStarted = false;
+    io.to(roomId).emit('gameOverStats', { teams: room.teams, isKot, winningTeam, winReason });
+    room.gameStarted = false;
 }
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server live on port ${PORT}`);
 });
-        
+     
